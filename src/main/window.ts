@@ -39,13 +39,16 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 600,
     title: 'Mailshell',
     show: false, // show after ready-to-show to prevent flash
+    // On all platforms, titleBarStyle: 'hidden' hides the default title bar
+    // but preserves native controls. On Windows/Linux, titleBarOverlay restores
+    // the native minimize/maximize/close buttons as an overlay in the drag region.
+    // frame: false is NOT used — it removes all native chrome including the overlay.
+    titleBarStyle: 'hidden' as const,
     ...(isMac
       ? {
-          titleBarStyle: 'hidden' as const,
           trafficLightPosition: { x: 12, y: 12 },
         }
       : {
-          frame: false,
           titleBarOverlay: {
             color: '#1a1a1a',
             symbolColor: '#e0e0e0',
