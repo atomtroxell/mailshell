@@ -1,8 +1,14 @@
-export default function WelcomeScreen() {
+import React from 'react'
+
+export function WelcomeScreen(): React.ReactElement {
   return (
     <div className="welcome-screen">
-      <h1 className="welcome-title">Mailshell</h1>
-      <button className="welcome-cta">Get started</button>
+      <div className="welcome-content">
+        <h1 className="welcome-logo">Mailshell</h1>
+        <button className="welcome-cta" type="button" disabled>
+          Get started
+        </button>
+      </div>
     </div>
   )
 }
