@@ -7,6 +7,7 @@ import { BrowserWindow, WebContentsView, session } from 'electron'
 import type { ServiceTab } from '@shared/ipc-types'
 import { TAB_BAR_HEIGHT } from './window'
 import { store } from './store'
+import { notifyNewView } from './shortcuts'
 
 export const SIDEBAR_WIDTH = 240
 export const TAB_BAR_HEIGHT_PX = TAB_BAR_HEIGHT  // matches TAB_BAR_HEIGHT in window.ts
@@ -43,9 +44,8 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
   win.contentView.addChildView(view)
   void view.webContents.loadURL(tab.url)
 
-  // Stub: Plan 03 will replace this with the real shortcut interceptor
-  // via attachShortcutInterceptor()
-  view.webContents.on('before-input-event', () => {})
+  // Notify shortcuts module so the interceptor is attached to this new view
+  notifyNewView(view.webContents, win)
 
   // Start invisible — activateTab makes the target visible
   view.setVisible(false)
