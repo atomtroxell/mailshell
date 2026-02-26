@@ -46,7 +46,9 @@ html, body, #root {
   min-height: var(--tab-bar-height);
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  /* Right padding clears Windows OS window controls (~138px for 3 buttons × 46px).
+     Left padding kept at 12px for visual balance. */
+  padding: 0 150px 0 12px;
   background-color: var(--bg-secondary);
   flex-shrink: 0;
 }
