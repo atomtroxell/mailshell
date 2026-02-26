@@ -26,6 +26,27 @@ header.header-app-content { display: none !important; }
 nav.sidebar-nav,
 [class*="sidebar"] { display: none !important; }
 
+/* Left icon rail — "Your products", "Settings", "News" utility icons
+ * These live in a vertical icon bar separate from the main header.
+ * Targeting by aria-label (most stable) and known Infomaniak nav patterns. */
+[aria-label="Your products"],
+[aria-label="Vos produits"],
+[aria-label="Settings"],
+[aria-label="Paramètres"],
+[aria-label="News"],
+[aria-label="Actualités"],
+[data-testid="nav-products"],
+[data-testid="nav-settings"],
+[data-testid="nav-news"],
+nav[class*="NavBar"],
+nav[class*="navbar"],
+[class*="NavBar--"],
+[class*="topbar-tools"],
+[class*="toolbar-nav"],
+aside[class*="tools"],
+.kmailNavBar,
+.kmail-navbar { display: none !important; }
+
 /* After hiding the sidebar, ensure the main content area fills the full width.
  * Infomaniak's layout typically uses a flex or grid container; the main content
  * element needs margin-left reset and full width when the sidebar is removed. */
