@@ -3,7 +3,7 @@
 // Views are created lazily on first activation and kept alive until app quit
 // (or explicit destroyAllViews call). Uses setVisible for switching — NOT removeChildView.
 
-import { BrowserWindow, WebContentsView, session } from 'electron'
+import { BrowserWindow, WebContentsView, session, shell } from 'electron'
 import type { ServiceTab } from '@shared/ipc-types'
 import { TAB_BAR_HEIGHT } from './window'
 import { store } from './store'
@@ -45,6 +45,12 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
   win.contentView.addChildView(view)
   void view.webContents.loadURL(tab.url)
 
+  // Send all new-window / target=_blank navigations to the system browser
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
   // Notify shortcuts module so the interceptor is attached to this new view
   notifyNewView(view.webContents, win)
 
@@ -71,11 +77,12 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
  * Makes the given tab's view visible at the correct bounds, hides all others.
  * Also persists the active tab to the store.
  */
-export function activateTab(tabId: string, win: BrowserWindow, sidebarOpen: boolean): void {
+export function activateTab(tabId: string, win: BrowserWindow, _sidebarOpen: boolean): void {
   const [winWidth, winHeight] = win.getContentSize()
-  const x = sidebarOpen ? SIDEBAR_WIDTH : 0
+  // Sidebar overlays the webview — always use full content width
+  const x = 0
   const y = TAB_BAR_HEIGHT_PX
-  const width = winWidth - x
+  const width = winWidth
   const height = winHeight - TAB_BAR_HEIGHT_PX
 
   const contentBounds = { x, y, width, height }
@@ -97,13 +104,13 @@ export function activateTab(tabId: string, win: BrowserWindow, sidebarOpen: bool
  * Resizes the currently active view to fill the content area.
  * Called on window resize events.
  */
-export function resizeActiveView(win: BrowserWindow, sidebarOpen: boolean): void {
+export function resizeActiveView(win: BrowserWindow, _sidebarOpen: boolean): void {
   if (!activeTabId) return
 
   const [winWidth, winHeight] = win.getContentSize()
-  const x = sidebarOpen ? SIDEBAR_WIDTH : 0
+  const x = 0
   const y = TAB_BAR_HEIGHT_PX
-  const width = winWidth - x
+  const width = winWidth
   const height = winHeight - TAB_BAR_HEIGHT_PX
 
   const contentBounds = { x, y, width, height }
