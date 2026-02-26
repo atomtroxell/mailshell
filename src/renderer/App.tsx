@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { WelcomeScreen } from './components/WelcomeScreen'
+import { OnboardingScreen } from './components/OnboardingScreen'
 import { AppShell } from './components/AppShell'
 
-type AppState = 'loading' | 'welcome' | 'shell'
-
-// DEV: Force shell state for Phase 2 development.
-// Phase 4 (Account Onboarding) will remove this flag and let hasAccounts drive routing.
-const DEV_FORCE_SHELL = true
+type AppState = 'loading' | 'onboarding' | 'shell'
 
 export function App(): React.ReactElement {
   const [appState, setAppState] = useState<AppState>('loading')
@@ -15,10 +11,10 @@ export function App(): React.ReactElement {
     window.mailshell
       .getInitialState()
       .then(({ hasAccounts }) => {
-        setAppState(hasAccounts || DEV_FORCE_SHELL ? 'shell' : 'welcome')
+        setAppState(hasAccounts ? 'shell' : 'onboarding')
       })
       .catch(() => {
-        setAppState(DEV_FORCE_SHELL ? 'shell' : 'welcome')
+        setAppState('onboarding')
       })
   }, [])
 
@@ -26,8 +22,8 @@ export function App(): React.ReactElement {
     return <div className="app-loading" />
   }
 
-  if (appState === 'welcome') {
-    return <WelcomeScreen />
+  if (appState === 'onboarding') {
+    return <OnboardingScreen onSuccess={() => setAppState('shell')} />
   }
 
   return <AppShell />
