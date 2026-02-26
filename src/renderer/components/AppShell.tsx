@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { TabBar } from './TabBar'
 import { Sidebar } from './Sidebar'
 import { SettingsPanel } from './SettingsPanel'
+import { StaleCssBanner } from './StaleCssBanner'
 import type { ServiceTab } from '@shared/ipc-types'
 
 export function AppShell(): React.ReactElement {
@@ -61,6 +62,7 @@ export function AppShell(): React.ReactElement {
 
   return (
     <div className="app-shell">
+      <StaleCssBanner />
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
