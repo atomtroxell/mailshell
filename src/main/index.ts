@@ -27,12 +27,11 @@ if (!gotTheLock) {
     }
   })
 
-  // Register IPC handlers before window creation
-  registerIpcHandlers()
-
   app.whenReady().then(() => {
     mainWindow = createMainWindow()
     createTray(mainWindow)
+    // Register IPC handlers after window creation — handlers need win reference
+    registerIpcHandlers(mainWindow)
 
     // macOS: re-create window when dock icon is clicked and no windows are open
     app.on('activate', () => {
