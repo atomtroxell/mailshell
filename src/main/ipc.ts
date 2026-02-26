@@ -3,7 +3,7 @@ import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { store } from './store'
 import type { InitialState, TabState, ShortcutAction } from '@shared/ipc-types'
-import { DEV_TABS, activateTab, resizeActiveView } from './webviews'
+import { DEV_TABS, activateTab, resizeActiveView, getOrCreateView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
@@ -36,9 +36,11 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     return { tabs: ordered, activeTabId: lastActiveTab }
   })
 
-  // SWITCH_TAB: activate a tab by ID and persist as lastActiveTab
+  // SWITCH_TAB: create view if not yet in pool, then activate
   ipcMain.handle(IPC_CHANNELS.SWITCH_TAB, (_event, tabId: string): void => {
     const sidebarOpen = store.get('sidebarOpen')
+    const tab = DEV_TABS.find(t => t.id === tabId)
+    if (tab) getOrCreateView(tab, win)
     activateTab(tabId, win, sidebarOpen)
   })
 

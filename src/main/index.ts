@@ -6,6 +6,7 @@ import { createMainWindow } from './window'
 import { createTray } from './tray'
 import { destroyAllViews, getViewPool } from './webviews'
 import { watchCssFiles } from './css-injection'
+import { store } from './store'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -29,6 +30,8 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(() => {
+    // Sidebar should always start closed — don't persist open state across sessions
+    store.set('sidebarOpen', false)
     mainWindow = createMainWindow()
     createTray(mainWindow)
     // Register IPC handlers after window creation — handlers need win reference
