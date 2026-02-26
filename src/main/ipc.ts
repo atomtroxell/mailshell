@@ -2,9 +2,12 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { store } from './store'
-import type { InitialState, TabState, ShortcutAction, AccountRecord } from '@shared/ipc-types'
-import { DEV_TABS, activateTab, resizeActiveView, getOrCreateView } from './webviews'
+import type { InitialState, TabState, ShortcutAction, AccountRecord, AuthResult, Provider } from '@shared/ipc-types'
+import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
+import { startGoogleAuthFlow, cancelGoogleAuth } from './auth/google'
+import { getAllAccounts, deleteAccount } from './auth/token-store'
+import { startSilentRefreshScheduler } from './auth/refresh'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
   // GET_INITIAL_STATE: hasAccounts + lastActiveTab + staleCssProviders
@@ -27,11 +30,12 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // GET_TAB_STATE: return current tab order + active tab
   ipcMain.handle(IPC_CHANNELS.GET_TAB_STATE, (): TabState => {
     const storedOrder = store.get('tabOrder')
-    // Merge DEV_TABS order with stored order; tabs not in store get appended
+    const allTabs = getTabsFromAccounts(getAllAccounts())
+    // Merge stored order with account tabs; tabs not in store get appended
     const ordered =
       storedOrder.length > 0
-        ? (storedOrder.map(id => DEV_TABS.find(t => t.id === id)).filter(Boolean) as typeof DEV_TABS)
-        : DEV_TABS
+        ? (storedOrder.map(id => allTabs.find(t => t.id === id)).filter(Boolean) as typeof allTabs)
+        : allTabs
     const lastActiveTab = store.get('lastActiveTab') || (ordered[0]?.id ?? '')
     return { tabs: ordered, activeTabId: lastActiveTab }
   })
@@ -39,7 +43,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // SWITCH_TAB: create view if not yet in pool, then activate
   ipcMain.handle(IPC_CHANNELS.SWITCH_TAB, (_event, tabId: string): void => {
     const sidebarOpen = store.get('sidebarOpen')
-    const tab = DEV_TABS.find(t => t.id === tabId)
+    const tab = getTabsFromAccounts(getAllAccounts()).find(t => t.id === tabId)
     if (tab) getOrCreateView(tab, win)
     activateTab(tabId, win, sidebarOpen)
   })
@@ -79,6 +83,45 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     store.set('shortcuts', shortcuts)
     return shortcuts
   })
+
+  // START_AUTH: start auth flow for given provider; returns AuthResult
+  ipcMain.handle(IPC_CHANNELS.START_AUTH, async (_event, provider: Provider): Promise<AuthResult> => {
+    if (provider === 'google') {
+      const result = await startGoogleAuthFlow()
+      if (result.success) {
+        // Load tabs from new account data
+        const accounts = getAllAccounts()
+        const tabs = getTabsFromAccounts(accounts)
+        const firstTab = tabs[0]
+        if (firstTab) getOrCreateView(firstTab, win)
+      }
+      return result
+    }
+    // Infomaniak handled in Plan 05 — return not-yet-implemented error
+    return { success: false, error: 'Infomaniak sign-in is not yet available.' }
+  })
+
+  // CANCEL_AUTH: cancel the current in-progress auth flow
+  ipcMain.handle(IPC_CHANNELS.CANCEL_AUTH, (): void => {
+    cancelGoogleAuth()
+    // Infomaniak cancel added in Plan 05
+  })
+
+  // GET_ACCOUNTS: return all account records (tokens remain encrypted)
+  ipcMain.handle(IPC_CHANNELS.GET_ACCOUNTS, (): AccountRecord[] => {
+    return getAllAccounts()
+  })
+
+  // REMOVE_ACCOUNT: remove account, destroy its WebContentsView, notify renderer
+  ipcMain.handle(IPC_CHANNELS.REMOVE_ACCOUNT, (_event, accountId: string): void => {
+    deleteAccount(accountId)
+    destroyView(accountId, win)
+    // If no accounts remain, the renderer's onSuccess callback won't fire;
+    // the renderer detects zero accounts via GET_ACCOUNTS and routes to onboarding
+  })
+
+  // Start silent token refresh scheduler
+  startSilentRefreshScheduler(win)
 
   // Wire keyboard shortcut interceptors to main window + all pool views
   wireAllShortcuts(win)

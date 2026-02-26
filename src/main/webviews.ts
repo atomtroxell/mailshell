@@ -4,7 +4,7 @@
 // (or explicit destroyAllViews call). Uses setVisible for switching — NOT removeChildView.
 
 import { BrowserWindow, WebContentsView, session, shell } from 'electron'
-import type { ServiceTab } from '@shared/ipc-types'
+import type { ServiceTab, AccountRecord } from '@shared/ipc-types'
 import { TAB_BAR_HEIGHT } from './window'
 import { store } from './store'
 import { notifyNewView } from './shortcuts'
@@ -13,11 +13,24 @@ import { injectCss, runSentinelCheck } from './css-injection'
 export const SIDEBAR_WIDTH = 240
 export const TAB_BAR_HEIGHT_PX = TAB_BAR_HEIGHT  // matches TAB_BAR_HEIGHT in window.ts
 
-// Hardcoded dev tabs for Phase 2 — Phase 4 will replace with dynamic accounts
-export const DEV_TABS: ServiceTab[] = [
-  { id: 'gmail-mail', name: 'Gmail Mail', url: 'https://mail.google.com' },
-  { id: 'infomaniak-mail', name: 'Infomaniak Mail', url: 'https://mail.infomaniak.com' },
-]
+/** Build ServiceTab[] from the current AccountRecord[]. One tab per account for Mail. */
+export function getTabsFromAccounts(accounts: AccountRecord[]): ServiceTab[] {
+  return accounts.map(account => {
+    if (account.provider === 'google') {
+      return {
+        id: `gmail-${account.email}`,
+        name: `Gmail (${account.email})`,
+        url: 'https://mail.google.com',
+      }
+    } else {
+      return {
+        id: `infomaniak-${account.email}`,
+        name: `Infomaniak (${account.email})`,
+        url: 'https://mail.infomaniak.com',
+      }
+    }
+  })
+}
 
 // Module-level pool — prevents GC of WebContentsView instances
 const viewPool = new Map<string, WebContentsView>()
@@ -126,6 +139,21 @@ export function destroyAllViews(): void {
     view.webContents.close()
   }
   viewPool.clear()
+}
+
+/**
+ * Remove a single view from the pool and close its WebContents.
+ * Called when an account is removed via REMOVE_ACCOUNT IPC.
+ */
+export function destroyView(tabId: string, win: BrowserWindow): void {
+  const view = viewPool.get(tabId)
+  if (view) {
+    win.contentView.removeChildView(view)
+    view.webContents.close()
+    viewPool.delete(tabId)
+  }
+  // If the removed view was active, clear activeTabId
+  if (activeTabId === tabId) activeTabId = ''
 }
 
 /**
