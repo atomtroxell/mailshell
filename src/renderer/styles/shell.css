@@ -120,3 +120,140 @@ html, body, #root {
 .welcome-cta:not(:disabled):hover {
   background-color: #5aabff;
 }
+
+/* ── App Shell Layout ─────────────────────────────────── */
+
+.shell-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Tabs ──────────────────────────────────────────────── */
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s ease, border-color 0.12s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+/* Active tab: bottom border highlight (NOT background fill — per user decision) */
+.tab--active {
+  color: var(--text-primary);
+  border-bottom-color: #4a9eff;
+}
+
+.tab--dragging {
+  opacity: 0.5;
+}
+
+.tab-favicon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+/* Spacer between tabs and right-side controls */
+.tab-bar-spacer {
+  flex: 1;
+  -webkit-app-region: drag; /* spacer is draggable */
+}
+
+/* ── Tab Bar Buttons (sidebar toggle, etc.) ─────────── */
+
+.tab-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.tab-bar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.sidebar-toggle--open {
+  color: var(--text-primary);
+}
+
+/* 3-line sidebar icon */
+.sidebar-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidebar-icon span {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* ── Content Area ────────────────────────────────────── */
+
+/* Override Phase 1 content-area (was a direct flex child of .app-shell).
+   Now it's a flex child of .shell-body with sidebar. */
+.shell-body .content-area {
+  flex: 1;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  min-width: 0;
+}
