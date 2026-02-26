@@ -1,6 +1,6 @@
 // src/main/store.ts
 import { Conf } from 'electron-conf/main'
-import type { ShortcutMap } from '@shared/ipc-types'
+import type { ShortcutMap, AccountRecord } from '@shared/ipc-types'
 
 export interface WindowState {
   x: number | undefined
@@ -13,7 +13,7 @@ export interface WindowState {
 export interface AppStore {
   windowState: WindowState
   lastActiveTab: string
-  accounts: string[]
+  accounts: AccountRecord[]
   tabOrder: string[]          // ordered array of tab IDs
   sidebarOpen: boolean        // sidebar visible state
   shortcuts: ShortcutMap      // user's shortcut map
@@ -30,7 +30,7 @@ export const store = new Conf<AppStore>({
       isMaximized: false,
     },
     lastActiveTab: '',
-    accounts: [],
+    accounts: [] as AccountRecord[],
     tabOrder: [],
     sidebarOpen: false,
     shortcuts: {
@@ -43,4 +43,16 @@ export const store = new Conf<AppStore>({
     } as ShortcutMap,
     staleCssProviders: [],
   },
+  migrations: [
+    {
+      version: 1,
+      hook: (instance): void => {
+        // Migrate old string[] accounts to AccountRecord[] (clear old format)
+        const existing = instance.get('accounts')
+        if (Array.isArray(existing) && existing.length > 0 && typeof existing[0] === 'string') {
+          instance.set('accounts', [] as AccountRecord[])
+        }
+      },
+    },
+  ],
 })

@@ -1,7 +1,7 @@
 // src/preload/shell.ts
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
-import type { MailshellAPI, InitialState, TabState, ShortcutMap, ShortcutAction } from '@shared/ipc-types'
+import type { MailshellAPI, InitialState, TabState, ShortcutMap, ShortcutAction, AccountRecord, AuthResult, Provider } from '@shared/ipc-types'
 
 const api: MailshellAPI = {
   getInitialState: (): Promise<InitialState> =>
@@ -47,6 +47,23 @@ const api: MailshellAPI = {
     }
     ipcRenderer.on(IPC_CHANNELS.CSS_STALE_STATUS, handler)
     return () => ipcRenderer.removeListener(IPC_CHANNELS.CSS_STALE_STATUS, handler)
+  },
+
+  // Auth (Phase 4)
+  startAuth: (provider: Provider): Promise<AuthResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.START_AUTH, provider),
+  cancelAuth: (): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.CANCEL_AUTH),
+  getAccounts: (): Promise<AccountRecord[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GET_ACCOUNTS),
+  removeAccount: (accountId: string): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.REMOVE_ACCOUNT, accountId),
+  onAuthRefreshFailed: (callback: (accountId: string) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, accountId: string): void => {
+      callback(accountId)
+    }
+    ipcRenderer.on(IPC_CHANNELS.AUTH_REFRESH_FAILED, handler)
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTH_REFRESH_FAILED, handler)
   },
 }
 

@@ -2,14 +2,14 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { store } from './store'
-import type { InitialState, TabState, ShortcutAction } from '@shared/ipc-types'
+import type { InitialState, TabState, ShortcutAction, AccountRecord } from '@shared/ipc-types'
 import { DEV_TABS, activateTab, resizeActiveView, getOrCreateView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
   // GET_INITIAL_STATE: hasAccounts + lastActiveTab + staleCssProviders
   ipcMain.handle(IPC_CHANNELS.GET_INITIAL_STATE, (): InitialState => {
-    const accounts = store.get('accounts')
+    const accounts = store.get('accounts') as AccountRecord[]
     const lastActiveTab = store.get('lastActiveTab')
     const staleCssProviders = store.get('staleCssProviders') as string[]
     return {

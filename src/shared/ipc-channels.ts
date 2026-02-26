@@ -20,6 +20,13 @@ export const IPC_CHANNELS = {
   // CSS injection staleness
   GET_CSS_STALENESS: 'get-css-staleness',    // renderer -> main: get current stale provider list
   CSS_STALE_STATUS: 'css-stale-status',      // main -> renderer push: provider staleness changed
+
+  // Auth (Phase 4)
+  START_AUTH: 'start-auth',              // renderer -> main: { provider: Provider }; returns AuthResult
+  CANCEL_AUTH: 'cancel-auth',            // renderer -> main: cancel in-progress auth
+  GET_ACCOUNTS: 'get-accounts',          // renderer -> main: returns AccountRecord[]
+  REMOVE_ACCOUNT: 'remove-account',      // renderer -> main: { accountId: string }
+  AUTH_REFRESH_FAILED: 'auth-refresh-failed', // main -> renderer push: accountId string
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
