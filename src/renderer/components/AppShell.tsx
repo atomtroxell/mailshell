@@ -15,6 +15,8 @@ export function AppShell(): React.ReactElement {
     window.mailshell.getTabState().then(({ tabs: t, activeTabId: id }) => {
       setTabs(t)
       setActiveTabId(id)
+      // Activate the initial tab so the main process creates and loads its WebContentsView
+      if (id) window.mailshell.switchTab(id)
     })
     window.mailshell.getSidebarState().then((isOpen) => {
       setSidebarOpen(isOpen)
