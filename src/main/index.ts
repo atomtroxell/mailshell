@@ -3,6 +3,8 @@ import { app, BrowserWindow } from 'electron'
 import started from 'electron-squirrel-startup'
 import { registerIpcHandlers } from './ipc'
 import { createMainWindow } from './window'
+import { createTray } from './tray'
+import { destroyAllViews } from './webviews'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -30,6 +32,7 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     mainWindow = createMainWindow()
+    createTray(mainWindow)
 
     // macOS: re-create window when dock icon is clicked and no windows are open
     app.on('activate', () => {
@@ -39,10 +42,16 @@ if (!gotTheLock) {
     })
   })
 
-  // Quit when all windows are closed (except macOS)
+  // Tray keeps the app alive on all platforms.
+  // Quit only happens from: tray menu Quit, or OS-level Cmd+Q / Alt+F4.
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit()
-    }
+    // Do not quit — tray keeps the app alive.
+  })
+
+  // Set isQuitting flag and clean up WebContentsViews before quit
+  app.on('before-quit', () => {
+    const appExt = app as typeof app & { isQuitting: boolean }
+    appExt.isQuitting = true
+    destroyAllViews()
   })
 }

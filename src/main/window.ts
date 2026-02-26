@@ -74,9 +74,18 @@ export function createMainWindow(): BrowserWindow {
     win.show()
   })
 
-  // Save window state on close
-  win.on('close', () => {
+  // Intercept close: hide to tray unless the app is truly quitting.
+  // app.isQuitting is set by: tray Quit click, or app.on('before-quit').
+  win.on('close', (event) => {
     saveWindowState(win)
+    const appExt = app as typeof app & { isQuitting?: boolean }
+    if (!appExt.isQuitting) {
+      event.preventDefault()
+      win.hide()
+      if (process.platform === 'darwin') {
+        app.dock?.hide()
+      }
+    }
   })
 
   // Load the renderer
