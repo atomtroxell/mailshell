@@ -1,5 +1,6 @@
 // src/main/store.ts
 import { Conf } from 'electron-conf/main'
+import type { ShortcutMap } from '@shared/ipc-types'
 
 export interface WindowState {
   x: number | undefined
@@ -13,6 +14,9 @@ export interface AppStore {
   windowState: WindowState
   lastActiveTab: string
   accounts: string[]
+  tabOrder: string[]      // ordered array of tab IDs
+  sidebarOpen: boolean    // sidebar visible state
+  shortcuts: ShortcutMap  // user's shortcut map
 }
 
 export const store = new Conf<AppStore>({
@@ -26,5 +30,15 @@ export const store = new Conf<AppStore>({
     },
     lastActiveTab: '',
     accounts: [],
+    tabOrder: [],
+    sidebarOpen: false,
+    shortcuts: {
+      'Ctrl+1': 'switch-tab-1',
+      'Ctrl+2': 'switch-tab-2',
+      'Ctrl+3': 'switch-tab-3',
+      'Ctrl+4': 'switch-tab-4',
+      'Ctrl+Backslash': 'toggle-sidebar',
+      'Ctrl+Comma': 'open-settings',
+    } as ShortcutMap,
   },
 })
