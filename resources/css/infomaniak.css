@@ -1,0 +1,98 @@
+/* resources/css/infomaniak.css
+ * Infomaniak Mail chrome-strip and compact density
+ * Injected via webContents.insertCSS({ cssOrigin: 'user' }) on did-finish-load
+ * All rules use !important to win the user-origin cascade
+ *
+ * SELECTOR VERIFICATION: header.header-app-content confirmed as sentinel selector
+ * (matches css-injection.ts SENTINELS constant).
+ * Remaining selectors are best-effort from known Infomaniak React app patterns;
+ * class names marked LOW CONFIDENCE require live DOM verification.
+ * Date authored: 2026-02-26
+ */
+
+/* ============================================================
+ * CHROME STRIP
+ * ============================================================ */
+
+/* Header bar — Infomaniak branding, navigation top bar
+ * Sentinel selector: header.header-app-content must be hidden AND present in DOM
+ * for staleness detection in css-injection.ts to work correctly.
+ * The header element + class combination is the most stable selector for Infomaniak's app shell. */
+header.header-app-content { display: none !important; }
+
+/* Left navigation sidebar — folder tree, labels, account navigation
+ * LOW CONFIDENCE — .app-sidebar or nav.sidebar-nav; verify against live DOM */
+.app-sidebar,
+nav.sidebar-nav,
+[class*="sidebar"] { display: none !important; }
+
+/* After hiding the sidebar, ensure the main content area fills the full width.
+ * Infomaniak's layout typically uses a flex or grid container; the main content
+ * element needs margin-left reset and full width when the sidebar is removed. */
+/* LOW CONFIDENCE — .app-content or .mail-content; verify container class against live DOM */
+.app-content,
+.mail-content,
+[class*="app-content"] {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Alternative: if layout uses a flex parent, ensure the mail list + reading pane expands */
+/* LOW CONFIDENCE */
+.app-layout,
+[class*="app-layout"] {
+  padding-left: 0 !important;
+}
+
+/* Promotional / upsell elements (upgrade prompts, storage banners)
+ * LOW CONFIDENCE — Infomaniak may show upsell prompts for free plans */
+[class*="upsell"],
+[class*="upgrade-banner"],
+[class*="promo-banner"] { display: none !important; }
+
+/* Cookie consent / GDPR banner if still visible after login
+ * LOW CONFIDENCE */
+[class*="cookie-banner"],
+[class*="gdpr-banner"],
+[id*="cookie"] { display: none !important; }
+
+
+/* ============================================================
+ * COMPACT DENSITY
+ * Spacing only — font-size and line-height are NOT changed.
+ * Goal: visibly tighter than Infomaniak default; more emails per screen.
+ * ============================================================ */
+
+/* Email list rows
+ * LOW CONFIDENCE — Infomaniak uses React components; row class name needs live DOM verification */
+[class*="message-row"],
+[class*="email-row"],
+[class*="conversation-row"] {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  min-height: 0 !important;
+}
+
+/* List item container
+ * LOW CONFIDENCE */
+[class*="message-item"],
+[class*="email-item"] {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* Reading pane content area padding
+ * LOW CONFIDENCE — verify .message-body or .email-body selector against live DOM */
+[class*="message-body"],
+[class*="email-body"],
+[class*="reading-pane"] {
+  padding: 8px 16px !important;
+}
+
+/* Thread / message header area (subject, sender, date)
+ * LOW CONFIDENCE */
+[class*="message-header"],
+[class*="email-header"] {
+  padding: 8px 16px !important;
+}
