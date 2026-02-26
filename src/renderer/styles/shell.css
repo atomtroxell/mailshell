@@ -366,6 +366,133 @@ html, body, #root {
   background-color: rgba(74, 158, 255, 0.08);
 }
 
+/* ── Onboarding Screen ────────────────────────────────── */
+
+.onboarding-screen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary);
+  /* Entire onboarding screen is draggable — no tab bar here */
+  -webkit-app-region: drag;
+}
+
+.onboarding-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 400px;
+  width: 100%;
+  padding: 0 24px;
+  -webkit-app-region: no-drag;
+}
+
+.onboarding-logo {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.onboarding-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.onboarding-error {
+  font-size: 13px;
+  color: #f59e0b;
+  text-align: center;
+  padding: 8px 12px;
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 6px;
+  width: 100%;
+}
+
+.onboarding-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.onboarding-btn {
+  width: 100%;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+  text-align: center;
+}
+
+.onboarding-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.onboarding-btn--google {
+  border-color: rgba(66, 133, 244, 0.3);
+}
+
+.onboarding-btn--google:hover {
+  background-color: rgba(66, 133, 244, 0.08);
+  border-color: rgba(66, 133, 244, 0.5);
+}
+
+.onboarding-btn--infomaniak {
+  border-color: rgba(0, 175, 100, 0.3);
+}
+
+.onboarding-btn--infomaniak:hover {
+  background-color: rgba(0, 175, 100, 0.08);
+  border-color: rgba(0, 175, 100, 0.5);
+}
+
+.onboarding-waiting {
+  gap: 16px;
+}
+
+.onboarding-waiting-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.onboarding-waiting-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.onboarding-cancel-btn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.1s ease, border-color 0.1s ease;
+}
+
+.onboarding-cancel-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 /* Stale CSS notification banner */
 .stale-css-banner {
   display: flex;
