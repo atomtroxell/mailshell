@@ -8,6 +8,7 @@ import type { ServiceTab } from '@shared/ipc-types'
 import { TAB_BAR_HEIGHT } from './window'
 import { store } from './store'
 import { notifyNewView } from './shortcuts'
+import { injectCss, runSentinelCheck } from './css-injection'
 
 export const SIDEBAR_WIDTH = 240
 export const TAB_BAR_HEIGHT_PX = TAB_BAR_HEIGHT  // matches TAB_BAR_HEIGHT in window.ts
@@ -46,6 +47,18 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
 
   // Notify shortcuts module so the interceptor is attached to this new view
   notifyNewView(view.webContents, win)
+
+  // Determine provider from tab ID convention: 'gmail-*' or 'infomaniak-*'
+  const provider = tab.id.startsWith('gmail') ? 'gmail' : 'infomaniak'
+
+  view.webContents.on('did-finish-load', () => {
+    void injectCss(view.webContents, provider).then(() => {
+      // 500ms delay to let DOM settle before sentinel visibility check
+      setTimeout(() => {
+        void runSentinelCheck(view.webContents, provider, win)
+      }, 500)
+    })
+  })
 
   // Start invisible — activateTab makes the target visible
   view.setVisible(false)

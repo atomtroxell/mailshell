@@ -4,7 +4,8 @@ import started from 'electron-squirrel-startup'
 import { registerIpcHandlers } from './ipc'
 import { createMainWindow } from './window'
 import { createTray } from './tray'
-import { destroyAllViews } from './webviews'
+import { destroyAllViews, getViewPool } from './webviews'
+import { watchCssFiles } from './css-injection'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -32,6 +33,8 @@ if (!gotTheLock) {
     createTray(mainWindow)
     // Register IPC handlers after window creation — handlers need win reference
     registerIpcHandlers(mainWindow)
+    // Dev hot-reload: re-inject CSS when source files change on disk
+    watchCssFiles(getViewPool)
 
     // macOS: re-create window when dock icon is clicked and no windows are open
     app.on('activate', () => {
