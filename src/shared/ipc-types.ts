@@ -4,6 +4,8 @@ export interface InitialState {
   hasAccounts: boolean
   /** ID of the last active tab, empty string if none */
   lastActiveTab: string
+  /** provider IDs with stale selectors; [] if all fresh */
+  staleCssProviders: string[]
 }
 
 /** A service tab definition - one per provider service (e.g., Gmail Mail, Infomaniak Calendar) */
@@ -51,6 +53,10 @@ export interface MailshellAPI {
 
   // Event listener for shell actions pushed from main process
   onShellAction: (callback: (action: ShortcutAction) => void) => () => void  // returns cleanup fn
+
+  // CSS staleness
+  getCssStaleness: () => Promise<string[]>                                             // returns current stale provider IDs from store
+  onCssStale: (callback: (provider: string, isStale: boolean) => void) => () => void  // returns cleanup fn; follows onShellAction pattern
 }
 
 /** Extend Window to make window.mailshell type-safe in renderer */

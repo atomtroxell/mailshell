@@ -16,6 +16,10 @@ export const IPC_CHANNELS = {
 
   // Shell action push (main -> renderer)
   SHELL_ACTION: 'shell-action',      // main -> renderer: push a ShortcutAction (e.g., from before-input-event)
+
+  // CSS injection staleness
+  GET_CSS_STALENESS: 'get-css-staleness',    // renderer -> main: get current stale provider list
+  CSS_STALE_STATUS: 'css-stale-status',      // main -> renderer push: provider staleness changed
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]
