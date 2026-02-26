@@ -1,0 +1,113 @@
+/* resources/css/gmail.css
+ * Gmail chrome-strip and compact density
+ * Injected via webContents.insertCSS({ cssOrigin: 'user' }) on did-finish-load
+ * All rules use !important to win the user-origin cascade
+ *
+ * SELECTOR VERIFICATION: selectors based on Gmail's stable gh-attribute pattern;
+ * minified class names marked LOW CONFIDENCE and require live DOM verification.
+ * Verified approach: prefer [gh="*"] attribute selectors over generated class names.
+ * Date authored: 2026-02-26
+ */
+
+/* ============================================================
+ * CHROME STRIP
+ * ============================================================ */
+
+/* Top navigation bar — Google branding, search bar, account switcher
+ * Sentinel selector: [gh="tl"] must be hidden AND present in DOM for
+ * staleness detection in css-injection.ts to work correctly.
+ * The gh="tl" attribute (toolbar) is a semantic attribute stable across Gmail UI updates. */
+[gh="tl"] { display: none !important; }
+
+/* Left navigation rail — Inbox, Sent, Drafts, Labels, etc.
+ * gh="s" is the sidebar/nav container in Gmail's attribute-based layout system.
+ * This hides the full left rail including labels and compose button area. */
+[gh="s"] { display: none !important; }
+
+/* After hiding the nav rail, ensure the email list/reading pane fills available width.
+ * Gmail's main content view expands automatically when the rail is hidden via display:none,
+ * but the wrapper may retain a left margin. */
+/* LOW CONFIDENCE — verify margin-left value against live DOM */
+[gh="tl"] ~ [role="main"],
+.nH.oy8Mbf { margin-left: 0 !important; }
+
+/* Category tabs bar — Promotions / Social / Updates
+ * The tabs container sits above the email list inside the main view.
+ * LOW CONFIDENCE — .aKh is a generated class; verify against live DOM */
+.aKh { display: none !important; }
+
+/* Alternative tab bar selector using aria role — more stable than class names */
+/* LOW CONFIDENCE — confirm this role/label targets only the category tabs */
+[gh="tl"] + * [role="tablist"] { display: none !important; }
+
+/* Chat panel — left-side Google Chat integration
+ * LOW CONFIDENCE — data-section-id and class .bAw need live DOM confirmation */
+[data-section-id="gm:"],
+.bAw { display: none !important; }
+
+/* Meet panel — right-side Google Meet integration
+ * LOW CONFIDENCE — verify selector against live DOM */
+[aria-label="Meet"],
+[data-tooltip*="Meet"] { display: none !important; }
+
+/* Footer — small links row at the bottom of Gmail
+ * LOW CONFIDENCE — .l9 is a generated class; verify */
+.l9 { display: none !important; }
+
+/* Google account switcher UI / profile popup trigger area
+ * The account switcher is inside [gh="tl"] (already hidden above), so this is belt-and-suspenders
+ * for cases where the top bar is partially visible. */
+/* Intentionally empty — covered by [gh="tl"] rule above */
+
+/* Survey banners / "Help improve Gmail" modals
+ * LOW CONFIDENCE — survey elements use dynamically generated class names */
+[data-ogsr-up],
+.Kj-JD { display: none !important; }
+
+/* "Get more storage" / upsell banners
+ * LOW CONFIDENCE — class names change; using attribute-based best effort */
+[data-tooltip="Get more storage"],
+.a3I { display: none !important; }
+
+/* Smart nudge / suggestions banners that appear above email list
+ * LOW CONFIDENCE */
+.KF4T6b { display: none !important; }
+
+
+/* ============================================================
+ * COMPACT DENSITY
+ * Spacing only — font-size and line-height are NOT changed.
+ * Goal: visible density comparable to Gmail's own "Compact" setting.
+ * ============================================================ */
+
+/* Email list rows
+ * .zA is the row container for each email item in the list.
+ * LOW CONFIDENCE — .zA is a generated class; verify selector hits email rows */
+.zA {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  min-height: 0 !important;
+}
+
+/* Email list row inner content height
+ * LOW CONFIDENCE — .oZ-jc or .xT class controls inner row layout */
+.oZ-jc,
+.xT {
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+}
+
+/* Reading pane content area padding
+ * Reduces the padding around the email body in the reading pane.
+ * LOW CONFIDENCE — .a3s, .ii selectors need live DOM confirmation */
+.a3s,
+.ii.gt {
+  padding: 8px 16px !important;
+}
+
+/* Thread view header area (subject, from, date row) padding
+ * LOW CONFIDENCE */
+.ha {
+  padding: 8px 16px !important;
+}
