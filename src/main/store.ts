@@ -14,9 +14,10 @@ export interface AppStore {
   windowState: WindowState
   lastActiveTab: string
   accounts: string[]
-  tabOrder: string[]      // ordered array of tab IDs
-  sidebarOpen: boolean    // sidebar visible state
-  shortcuts: ShortcutMap  // user's shortcut map
+  tabOrder: string[]          // ordered array of tab IDs
+  sidebarOpen: boolean        // sidebar visible state
+  shortcuts: ShortcutMap      // user's shortcut map
+  staleCssProviders: string[] // provider IDs with stale CSS selectors; [] if all fresh
 }
 
 export const store = new Conf<AppStore>({
@@ -40,5 +41,6 @@ export const store = new Conf<AppStore>({
       'Ctrl+Backslash': 'toggle-sidebar',
       'Ctrl+Comma': 'open-settings',
     } as ShortcutMap,
+    staleCssProviders: [],
   },
 })

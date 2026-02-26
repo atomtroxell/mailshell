@@ -37,6 +37,17 @@ const api: MailshellAPI = {
       ipcRenderer.off(IPC_CHANNELS.SHELL_ACTION, listener)
     }
   },
+
+  // CSS staleness
+  getCssStaleness: (): Promise<string[]> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GET_CSS_STALENESS) as Promise<string[]>,
+  onCssStale: (callback: (provider: string, isStale: boolean) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, provider: string, isStale: boolean): void => {
+      callback(provider, isStale)
+    }
+    ipcRenderer.on(IPC_CHANNELS.CSS_STALE_STATUS, handler)
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.CSS_STALE_STATUS, handler)
+  },
 }
 
 contextBridge.exposeInMainWorld('mailshell', api)

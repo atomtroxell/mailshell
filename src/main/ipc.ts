@@ -7,14 +7,21 @@ import { DEV_TABS, activateTab, resizeActiveView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
-  // GET_INITIAL_STATE: hasAccounts + lastActiveTab
+  // GET_INITIAL_STATE: hasAccounts + lastActiveTab + staleCssProviders
   ipcMain.handle(IPC_CHANNELS.GET_INITIAL_STATE, (): InitialState => {
     const accounts = store.get('accounts')
     const lastActiveTab = store.get('lastActiveTab')
+    const staleCssProviders = store.get('staleCssProviders') as string[]
     return {
       hasAccounts: accounts.length > 0,
       lastActiveTab,
+      staleCssProviders,
     }
+  })
+
+  // GET_CSS_STALENESS: return current stale provider list from store
+  ipcMain.handle(IPC_CHANNELS.GET_CSS_STALENESS, (): string[] => {
+    return store.get('staleCssProviders') as string[]
   })
 
   // GET_TAB_STATE: return current tab order + active tab

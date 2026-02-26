@@ -11,6 +11,7 @@ const config: ForgeConfig = {
     appCopyright: 'Copyright 2026 Mailshell',
     icon: './assets/icons/icon',
     asar: true,
+    extraResource: ['resources/css'],
   },
   rebuildConfig: {},
   makers: [],
