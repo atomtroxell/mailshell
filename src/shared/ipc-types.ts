@@ -57,6 +57,13 @@ export interface MailshellAPI {
   // CSS staleness
   getCssStaleness: () => Promise<string[]>                                             // returns current stale provider IDs from store
   onCssStale: (callback: (provider: string, isStale: boolean) => void) => () => void  // returns cleanup fn; follows onShellAction pattern
+
+  // Auth (Phase 4)
+  startAuth: (provider: Provider) => Promise<AuthResult>
+  cancelAuth: () => Promise<void>
+  getAccounts: () => Promise<AccountRecord[]>
+  removeAccount: (accountId: string) => Promise<void>
+  onAuthRefreshFailed: (callback: (accountId: string) => void) => () => void
 }
 
 /** Extend Window to make window.mailshell type-safe in renderer */
@@ -64,4 +71,25 @@ declare global {
   interface Window {
     mailshell: MailshellAPI
   }
+}
+
+// Auth types added in Phase 4
+export type Provider = 'google' | 'infomaniak'
+
+export interface AccountRecord {
+  id: string              // e.g. 'google-user@gmail.com' — provider-prefixed email
+  provider: Provider
+  email: string
+  displayName?: string
+  tokens: {
+    accessToken: string   // safeStorage-encrypted latin1 string
+    refreshToken?: string // safeStorage-encrypted latin1 string
+    expiresAt: number     // Unix timestamp ms
+  }
+}
+
+export interface AuthResult {
+  success: boolean
+  accountId?: string
+  error?: string
 }
