@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { TabBar } from './TabBar'
 import { Sidebar } from './Sidebar'
+import { SettingsPanel } from './SettingsPanel'
 import type { ServiceTab } from '@shared/ipc-types'
 
 export function AppShell(): React.ReactElement {
   const [tabs, setTabs] = useState<ServiceTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
 
   // Load initial state from main process
   useEffect(() => {
@@ -44,7 +46,7 @@ export function AppShell(): React.ReactElement {
       if (action === 'toggle-sidebar') {
         handleToggleSidebar()
       } else if (action === 'open-settings') {
-        // Phase 5 settings panel — no-op for now, will be handled by Plan 05
+        setSettingsOpen(true)
       } else if (action.startsWith('switch-tab-')) {
         const index = parseInt(action.replace('switch-tab-', ''), 10) - 1
         const target = tabs[index]
@@ -70,6 +72,7 @@ export function AppShell(): React.ReactElement {
         {/* Content area — WebContentsView is positioned here by main process */}
         <div className="content-area" aria-label="Web content" />
       </div>
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
     </div>
   )
 }
