@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import type { ShortcutAction, ShortcutMap } from '@shared/ipc-types'
+import { AccountsSection } from './AccountsSection'
 
 interface SettingsPanelProps {
   onClose: () => void
+  onSignedOut: () => void  // called when last account removed — App.tsx routes to onboarding
 }
 
 const ACTION_LABELS: Record<ShortcutAction, string> = {
@@ -19,7 +21,7 @@ const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'toggle-sidebar', 'open-settings',
 ]
 
-export function SettingsPanel({ onClose }: SettingsPanelProps): React.ReactElement {
+export function SettingsPanel({ onClose, onSignedOut }: SettingsPanelProps): React.ReactElement {
   const [shortcuts, setShortcuts] = useState<ShortcutMap>({})
   const [recordingAction, setRecordingAction] = useState<ShortcutAction | null>(null)
 
@@ -75,31 +77,42 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.ReactEleme
     >
       <div className="settings-panel">
         <div className="settings-header">
-          <h2 className="settings-title">Keyboard Shortcuts</h2>
+          <h2 className="settings-title">Settings</h2>
           <button className="settings-close" onClick={onClose} aria-label="Close settings">
             &times;
           </button>
         </div>
         <div className="settings-body">
-          {SHORTCUT_ACTIONS.map((action) => {
-            const isRecording = recordingAction === action
-            const currentAccelerator = actionToAccelerator[action] ?? ''
-            return (
-              <div
-                key={action}
-                className={`settings-shortcut-row ${isRecording ? 'settings-shortcut-row--recording' : ''}`}
-                onClick={() => handleRowClick(action)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(action) }}
-              >
-                <span className="settings-action-label">{ACTION_LABELS[action]}</span>
-                <span className="settings-accelerator">
-                  {isRecording ? 'Press a key...' : (currentAccelerator || 'unbound')}
-                </span>
-              </div>
-            )
-          })}
+          <div className="settings-section">
+            <AccountsSection
+              onLastAccountRemoved={() => {
+                onClose()
+                onSignedOut()
+              }}
+            />
+          </div>
+          <div className="settings-section">
+            <h3 className="settings-section-title">Keyboard Shortcuts</h3>
+            {SHORTCUT_ACTIONS.map((action) => {
+              const isRecording = recordingAction === action
+              const currentAccelerator = actionToAccelerator[action] ?? ''
+              return (
+                <div
+                  key={action}
+                  className={`settings-shortcut-row ${isRecording ? 'settings-shortcut-row--recording' : ''}`}
+                  onClick={() => handleRowClick(action)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(action) }}
+                >
+                  <span className="settings-action-label">{ACTION_LABELS[action]}</span>
+                  <span className="settings-accelerator">
+                    {isRecording ? 'Press a key...' : (currentAccelerator || 'unbound')}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
