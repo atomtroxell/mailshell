@@ -12,6 +12,7 @@ export default defineConfig({
   },
   define: {
     'process.env.GOOGLE_CLIENT_ID': JSON.stringify(env.GOOGLE_CLIENT_ID ?? ''),
+    'process.env.GOOGLE_CLIENT_SECRET': JSON.stringify(env.GOOGLE_CLIENT_SECRET ?? ''),
     'process.env.INFOMANIAK_CLIENT_ID': JSON.stringify(env.INFOMANIAK_CLIENT_ID ?? ''),
     'process.env.INFOMANIAK_CLIENT_SECRET': JSON.stringify(env.INFOMANIAK_CLIENT_SECRET ?? ''),
   },

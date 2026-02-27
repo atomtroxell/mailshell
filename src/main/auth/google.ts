@@ -8,9 +8,8 @@ import { startOAuthCallbackServer, buildCallbackUri } from './oauth-server'
 import { buildAccountRecord, saveAccount, getAllAccounts } from './token-store'
 import type { AccountRecord, AuthResult } from '@shared/ipc-types'
 
-// Store the client ID as a compile-time constant (no secret for desktop apps).
-// Developer: replace with your actual Google Cloud Console Desktop app client ID.
-export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? 'YOUR_GOOGLE_CLIENT_ID'
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? ''
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? ''
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -60,6 +59,7 @@ export async function exchangeGoogleCode(params: {
       code_verifier: params.codeVerifier,
       redirect_uri: params.redirectUri,
       client_id: params.clientId,
+      client_secret: GOOGLE_CLIENT_SECRET,
       grant_type: 'authorization_code',
     }),
   })
@@ -88,6 +88,7 @@ export async function refreshGoogleToken(encryptedRefreshToken: string, clientId
     body: new URLSearchParams({
       refresh_token: refreshToken,
       client_id: clientId,
+      client_secret: GOOGLE_CLIENT_SECRET,
       grant_type: 'refresh_token',
     }),
   })
