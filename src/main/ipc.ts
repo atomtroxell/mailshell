@@ -6,6 +6,7 @@ import type { InitialState, TabState, ShortcutAction, AccountRecord, AuthResult,
 import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 import { startGoogleAuthFlow, cancelGoogleAuth } from './auth/google'
+import { startInfomaniakAuthFlow, cancelInfomaniakAuth } from './auth/infomaniak'
 import { getAllAccounts, deleteAccount } from './auth/token-store'
 import { startSilentRefreshScheduler } from './auth/refresh'
 
@@ -97,14 +98,23 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       }
       return result
     }
-    // Infomaniak handled in Plan 05 — return not-yet-implemented error
-    return { success: false, error: 'Infomaniak sign-in is not yet available.' }
+    if (provider === 'infomaniak') {
+      const result = await startInfomaniakAuthFlow()
+      if (result.success) {
+        const accounts = getAllAccounts()
+        const tabs = getTabsFromAccounts(accounts)
+        const firstNewTab = tabs.find(t => t.id.startsWith('infomaniak-'))
+        if (firstNewTab) getOrCreateView(firstNewTab, win)
+      }
+      return result
+    }
+    return { success: false, error: `Unknown provider: ${provider}` }
   })
 
   // CANCEL_AUTH: cancel the current in-progress auth flow
   ipcMain.handle(IPC_CHANNELS.CANCEL_AUTH, (): void => {
     cancelGoogleAuth()
-    // Infomaniak cancel added in Plan 05
+    cancelInfomaniakAuth()
   })
 
   // GET_ACCOUNTS: return all account records (tokens remain encrypted)

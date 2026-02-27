@@ -6,6 +6,7 @@ import { BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { getAllAccounts, saveAccount, encryptToken } from './token-store'
 import { refreshGoogleToken, GOOGLE_CLIENT_ID } from './google'
+import { refreshInfomaniakToken, INFOMANIAK_CLIENT_ID } from './infomaniak'
 
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000   // 30 minutes
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000   // refresh if expiring within 5 min
@@ -43,8 +44,17 @@ async function runRefreshCycle(win: BrowserWindow): Promise<void> {
             expiresAt: Date.now() + expiresIn * 1000,
           },
         })
+      } else if (account.provider === 'infomaniak') {
+        const { accessToken, expiresIn } = await refreshInfomaniakToken(account.tokens.refreshToken, INFOMANIAK_CLIENT_ID)
+        saveAccount({
+          ...account,
+          tokens: {
+            ...account.tokens,
+            accessToken: encryptToken(accessToken),
+            expiresAt: Date.now() + expiresIn * 1000,
+          },
+        })
       }
-      // Infomaniak refresh added in Plan 05
     } catch (err) {
       // Per locked decision: only notify renderer on auth failure (not network errors)
       const isNetworkError = err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('network'))
