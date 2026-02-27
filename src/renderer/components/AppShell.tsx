@@ -3,13 +3,20 @@ import { TabBar } from './TabBar'
 import { Sidebar } from './Sidebar'
 import { SettingsPanel } from './SettingsPanel'
 import { StaleCssBanner } from './StaleCssBanner'
-import type { ServiceTab } from '@shared/ipc-types'
+import { AuthBanner } from './AuthBanner'
+import type { ServiceTab, AccountRecord } from '@shared/ipc-types'
 
-export function AppShell(): React.ReactElement {
+interface AppShellProps {
+  onSignedOut: () => void
+}
+
+export function AppShell({ onSignedOut }: AppShellProps): React.ReactElement {
   const [tabs, setTabs] = useState<ServiceTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
+  const [failedAuthIds, setFailedAuthIds] = useState<string[]>([])
+  const [accounts, setAccounts] = useState<AccountRecord[]>([])
 
   // Load initial state from main process
   useEffect(() => {
@@ -22,6 +29,15 @@ export function AppShell(): React.ReactElement {
     window.mailshell.getSidebarState().then((isOpen) => {
       setSidebarOpen(isOpen)
     })
+  }, [])
+
+  // Load accounts and subscribe to auth refresh failures
+  useEffect(() => {
+    window.mailshell.getAccounts().then(setAccounts)
+    const cleanup = window.mailshell.onAuthRefreshFailed((accountId) => {
+      setFailedAuthIds(prev => prev.includes(accountId) ? prev : [...prev, accountId])
+    })
+    return cleanup
   }, [])
 
   // Handle tab switch
@@ -63,6 +79,29 @@ export function AppShell(): React.ReactElement {
   return (
     <div className="app-shell">
       <StaleCssBanner />
+      {failedAuthIds.map(accountId => {
+        const account = accounts.find(a => a.id === accountId)
+        if (!account) return null
+        return (
+          <AuthBanner
+            key={accountId}
+            accountId={accountId}
+            email={account.email}
+            provider={account.provider}
+            onDismiss={(id) => setFailedAuthIds(prev => prev.filter(x => x !== id))}
+            onReconnect={async (id) => {
+              const acct = accounts.find(a => a.id === id)
+              if (!acct) return
+              const result = await window.mailshell.startAuth(acct.provider)
+              if (result.success) {
+                setFailedAuthIds(prev => prev.filter(x => x !== id))
+                const updated = await window.mailshell.getAccounts()
+                setAccounts(updated)
+              }
+            }}
+          />
+        )
+      })}
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
@@ -76,7 +115,7 @@ export function AppShell(): React.ReactElement {
         {/* Content area — WebContentsView is positioned here by main process */}
         <div className="content-area" aria-label="Web content" />
       </div>
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onSignedOut={onSignedOut} />}
     </div>
   )
 }

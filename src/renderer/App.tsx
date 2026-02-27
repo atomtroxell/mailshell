@@ -26,5 +26,5 @@ export function App(): React.ReactElement {
     return <OnboardingScreen onSuccess={() => setAppState('shell')} />
   }
 
-  return <AppShell />
+  return <AppShell onSignedOut={() => setAppState('onboarding')} />
 }
