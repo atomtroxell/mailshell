@@ -51,7 +51,11 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      session: session.fromPartition('persist:' + tab.id),
+      session: session.fromPartition(
+        tab.id.startsWith('gmail-') ? 'persist:google' :
+        tab.id.startsWith('infomaniak-') ? 'persist:infomaniak' :
+        'persist:' + tab.id
+      ),
     },
   })
 
@@ -90,12 +94,11 @@ export function getOrCreateView(tab: ServiceTab, win: BrowserWindow): WebContent
  * Makes the given tab's view visible at the correct bounds, hides all others.
  * Also persists the active tab to the store.
  */
-export function activateTab(tabId: string, win: BrowserWindow, _sidebarOpen: boolean): void {
+export function activateTab(tabId: string, win: BrowserWindow, sidebarOpen: boolean): void {
   const [winWidth, winHeight] = win.getContentSize()
-  // Sidebar overlays the webview — always use full content width
-  const x = 0
+  const x = sidebarOpen ? SIDEBAR_WIDTH : 0
   const y = TAB_BAR_HEIGHT_PX
-  const width = winWidth
+  const width = winWidth - (sidebarOpen ? SIDEBAR_WIDTH : 0)
   const height = winHeight - TAB_BAR_HEIGHT_PX
 
   const contentBounds = { x, y, width, height }
@@ -117,13 +120,13 @@ export function activateTab(tabId: string, win: BrowserWindow, _sidebarOpen: boo
  * Resizes the currently active view to fill the content area.
  * Called on window resize events.
  */
-export function resizeActiveView(win: BrowserWindow, _sidebarOpen: boolean): void {
+export function resizeActiveView(win: BrowserWindow, sidebarOpen: boolean): void {
   if (!activeTabId) return
 
   const [winWidth, winHeight] = win.getContentSize()
-  const x = 0
+  const x = sidebarOpen ? SIDEBAR_WIDTH : 0
   const y = TAB_BAR_HEIGHT_PX
-  const width = winWidth
+  const width = winWidth - (sidebarOpen ? SIDEBAR_WIDTH : 0)
   const height = winHeight - TAB_BAR_HEIGHT_PX
 
   const contentBounds = { x, y, width, height }

@@ -5,8 +5,7 @@
  *
  * SELECTOR VERIFICATION: header.header-app-content confirmed as sentinel selector
  * (matches css-injection.ts SENTINELS constant).
- * Remaining selectors are best-effort from known Infomaniak React app patterns;
- * class names marked LOW CONFIDENCE require live DOM verification.
+ * Icon rail selectors confirmed from live DOM 2026-02-25.
  * Date authored: 2026-02-26
  */
 
@@ -16,36 +15,23 @@
 
 /* Header bar — Infomaniak branding, navigation top bar
  * Sentinel selector: header.header-app-content must be hidden AND present in DOM
- * for staleness detection in css-injection.ts to work correctly.
- * The header element + class combination is the most stable selector for Infomaniak's app shell. */
+ * for staleness detection in css-injection.ts to work correctly. */
 header.header-app-content { display: none !important; }
 
-/* Left navigation sidebar — folder tree, labels, account navigation
- * LOW CONFIDENCE — .app-sidebar or nav.sidebar-nav; verify against live DOM */
+/* Icon rail — News, Settings, Products (app switcher) buttons
+ * Confirmed from live DOM: .header-icons is the parent, .header-elements is the child.
+ * The descendant selector matches the specificity of the site's own flex rule. */
+.header-icons,
+.header-icons .header-elements { display: none !important; }
+button[data-cy="header-button-settings"] { display: none !important; }
+app-product-menu,
+module-products-component { display: none !important; }
+
+/* Left navigation sidebar — folder tree, labels, account switcher
+ * [class*="sidebar"] was confirmed working; other selectors are LOW CONFIDENCE. */
 .app-sidebar,
 nav.sidebar-nav,
 [class*="sidebar"] { display: none !important; }
-
-/* Left icon rail — "Your products", "Settings", "News" utility icons
- * These live in a vertical icon bar separate from the main header.
- * Targeting by aria-label (most stable) and known Infomaniak nav patterns. */
-[aria-label="Your products"],
-[aria-label="Vos produits"],
-[aria-label="Settings"],
-[aria-label="Paramètres"],
-[aria-label="News"],
-[aria-label="Actualités"],
-[data-testid="nav-products"],
-[data-testid="nav-settings"],
-[data-testid="nav-news"],
-nav[class*="NavBar"],
-nav[class*="navbar"],
-[class*="NavBar--"],
-[class*="topbar-tools"],
-[class*="toolbar-nav"],
-aside[class*="tools"],
-.kmailNavBar,
-.kmail-navbar { display: none !important; }
 
 /* After hiding the sidebar, ensure the main content area fills the full width.
  * Infomaniak's layout typically uses a flex or grid container; the main content

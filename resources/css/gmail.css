@@ -1,34 +1,57 @@
 /* resources/css/gmail.css
  * Gmail chrome-strip and compact density
- * Injected via webContents.insertCSS({ cssOrigin: 'user' }) on did-finish-load
+ * Injected via executeJavaScript on did-finish-load.
  *
- * Only confirmed [gh] attribute selectors are used for hide rules.
- * LOW CONFIDENCE class-name rules removed — they broke the email list.
- * Density rules use padding only; fixed heights are NOT set.
+ * Selectors used:
+ *   [gh="s"]  — left nav rail (confirmed stable)
+ *   aria-label — top bar buttons (account, apps, help)
+ *   [role="main"] — main content area
+ *
+ * NOTE: [gh="tl"] was previously used for the top nav but drifted
+ * to match a different container; removed to avoid hiding inbox content.
+ * Sentinel updated to [aria-label="Google apps"] instead.
  */
 
 /* ============================================================
- * CHROME STRIP — confirmed stable [gh] attribute selectors
+ * TOP BAR — hide account switcher, Google apps, help/support
  * ============================================================ */
 
-/* Top navigation bar (Google branding, search, account switcher)
- * Sentinel: css-injection.ts checks [gh="tl"] visibility for staleness. */
-[gh="tl"] { display: none !important; }
+/* Google apps waffle */
+a[aria-label="Google apps"],
+[aria-label="Google apps"] { display: none !important; }
 
-/* Left navigation rail (Inbox, Sent, Drafts, Labels, Compose button) */
+/* Google Account button — aria-label includes email or "Google Account" */
+[aria-label*="Google Account"] { display: none !important; }
+
+/* Help / Support */
+[aria-label="Help"],
+[aria-label="Help & Feedback"],
+[data-tooltip="Help"] { display: none !important; }
+
+/* ============================================================
+ * LEFT NAVIGATION RAIL
+ * ============================================================ */
+
+/* Left nav sidebar (Inbox, Sent, Drafts, Labels, Compose button) */
 [gh="s"] { display: none !important; }
 
-/* Ensure main content area fills full width after nav rail is hidden */
+/* Ensure main content fills full width after nav rail is hidden */
 [role="main"] {
   margin-left: 0 !important;
   width: 100% !important;
 }
 
-/* Category tabs (Promotions / Social / Updates) — aria role is stable */
+/* ============================================================
+ * CATEGORY TABS (Promotions / Social / Updates)
+ * ============================================================ */
+
 [role="tablist"][aria-label*="inbox"],
 [role="tablist"][aria-label*="Inbox"] { display: none !important; }
 
-/* Chat / Meet panels — use aria labels which are more stable than class names */
+/* ============================================================
+ * CHAT / MEET PANELS
+ * ============================================================ */
+
 [aria-label="Chat"],
 [aria-label="Meet"],
 [aria-label="Google Chat"],
@@ -39,13 +62,13 @@
  * Padding adjustments only — no fixed heights, no font changes.
  * ============================================================ */
 
-/* Email list rows — reduce vertical padding only */
+/* Email list rows */
 [role="main"] tr.zA,
 [role="main"] [role="row"] {
   line-height: 1.4 !important;
 }
 
-/* Reading pane — tighten content padding */
+/* Reading pane */
 [role="main"] .ii.gt {
   padding: 8px 16px !important;
 }

@@ -2,7 +2,7 @@
 // Google OAuth 2.0 for Desktop (Installed) Apps with PKCE.
 // No client_secret — Desktop app clients use PKCE only.
 // Source: https://developers.google.com/identity/protocols/oauth2/native-app
-import { shell } from 'electron'
+import { BrowserWindow } from 'electron'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce'
 import { startOAuthCallbackServer, buildCallbackUri } from './oauth-server'
 import { buildAccountRecord, saveAccount, getAllAccounts } from './token-store'
@@ -115,6 +115,7 @@ export async function startGoogleAuthFlow(): Promise<AuthResult> {
   const state = generateState()
 
   let server: Awaited<ReturnType<typeof startOAuthCallbackServer>> | null = null
+  let authWin: BrowserWindow | null = null
 
   try {
     server = await startOAuthCallbackServer()
@@ -126,16 +127,49 @@ export async function startGoogleAuthFlow(): Promise<AuthResult> {
       state,
     })
 
-    // Set up cancellation
     let cancelled = false
+
+    authWin = new BrowserWindow({
+      width: 800,
+      height: 700,
+      title: 'Sign in to Google',
+      webPreferences: {
+        partition: 'persist:google',
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+      },
+    })
+
+    // Strip "Electron/x.x.x" from the user agent so Google does not flag this
+    // as an embedded webview and block the OAuth flow
+    authWin.webContents.setUserAgent(
+      authWin.webContents.getUserAgent().replace(/\s*Electron\/[\d.]+/, '')
+    )
+
     cancelCurrentAuth = () => {
       cancelled = true
-      void server?.stop()
+      if (authWin && !authWin.isDestroyed()) authWin.close()
     }
 
-    await shell.openExternal(authUrl)
-    const { code, state: returnedState } = await server.waitForCallback()
-    cancelCurrentAuth = null
+    // Listen for window close before loadURL so the event is never missed
+    const windowClosedPromise = new Promise<never>((_, reject) => {
+      authWin!.on('closed', () => {
+        void server?.stop()
+        reject(new Error('Sign-in was cancelled'))
+      })
+    })
+
+    void authWin.loadURL(authUrl)
+
+    const { code, state: returnedState } = await Promise.race([
+      server.waitForCallback(),
+      windowClosedPromise,
+    ]).finally(() => {
+      if (authWin && !authWin.isDestroyed()) authWin.close()
+      authWin = null
+      cancelCurrentAuth = null
+    })
 
     if (cancelled) {
       return { success: false, error: 'Sign-in was cancelled' }

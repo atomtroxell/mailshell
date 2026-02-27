@@ -2,7 +2,7 @@
 // Infomaniak OAuth 2.0 flow — same PKCE + system browser + localhost callback pattern as Google.
 // Infomaniak requires client_secret in the token exchange body even when PKCE is used.
 // Endpoints discovered from https://manager.infomaniak.com -> Developer -> Applications.
-import { shell } from 'electron'
+import { BrowserWindow } from 'electron'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce'
 import { startOAuthCallbackServer, buildCallbackUri } from './oauth-server'
 import { buildAccountRecord, saveAccount, getAllAccounts } from './token-store'
@@ -117,6 +117,7 @@ export async function startInfomaniakAuthFlow(): Promise<AuthResult> {
   const state = generateState()
 
   let server: Awaited<ReturnType<typeof startOAuthCallbackServer>> | null = null
+  let authWin: BrowserWindow | null = null
 
   try {
     server = await startOAuthCallbackServer()
@@ -128,16 +129,47 @@ export async function startInfomaniakAuthFlow(): Promise<AuthResult> {
       state,
     })
 
-    // Set up cancellation
     let cancelled = false
+
+    authWin = new BrowserWindow({
+      width: 800,
+      height: 700,
+      title: 'Sign in to Infomaniak',
+      webPreferences: {
+        partition: 'persist:infomaniak',
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+      },
+    })
+
+    // Strip "Electron/x.x.x" from the user agent
+    authWin.webContents.setUserAgent(
+      authWin.webContents.getUserAgent().replace(/\s*Electron\/[\d.]+/, '')
+    )
+
     cancelCurrentAuth = () => {
       cancelled = true
-      void server?.stop()
+      if (authWin && !authWin.isDestroyed()) authWin.close()
     }
 
-    await shell.openExternal(authUrl)
-    const { code, state: returnedState } = await server.waitForCallback()
-    cancelCurrentAuth = null
+    const windowClosedPromise = new Promise<never>((_, reject) => {
+      authWin!.on('closed', () => {
+        void server?.stop()
+        reject(new Error('Sign-in was cancelled'))
+      })
+    })
+
+    void authWin.loadURL(authUrl)
+
+    const { code, state: returnedState } = await Promise.race([
+      server.waitForCallback(),
+      windowClosedPromise,
+    ]).finally(() => {
+      if (authWin && !authWin.isDestroyed()) authWin.close()
+      authWin = null
+      cancelCurrentAuth = null
+    })
 
     if (cancelled) {
       return { success: false, error: 'Sign-in was cancelled' }
