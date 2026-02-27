@@ -133,7 +133,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // SET_OVERLAY_OPEN: hide/show active webview while a renderer modal is open
   ipcMain.handle(IPC_CHANNELS.SET_OVERLAY_OPEN, (_event, open: boolean): void => {
     if (open) {
-      hideActiveView()
+      hideActiveView(win)
     } else {
       showActiveView(win, store.get('sidebarOpen'))
     }
