@@ -27,6 +27,9 @@ export const IPC_CHANNELS = {
   GET_ACCOUNTS: 'get-accounts',          // renderer -> main: returns AccountRecord[]
   REMOVE_ACCOUNT: 'remove-account',      // renderer -> main: { accountId: string }
   AUTH_REFRESH_FAILED: 'auth-refresh-failed', // main -> renderer push: accountId string
+
+  // Overlay management — renderer tells main to hide/show webviews while modal is open
+  SET_OVERLAY_OPEN: 'set-overlay-open',      // renderer -> main: boolean (true = overlay opened, hide webview)
 } as const
 
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS]

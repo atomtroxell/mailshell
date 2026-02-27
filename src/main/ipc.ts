@@ -3,7 +3,7 @@ import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { store } from './store'
 import type { InitialState, TabState, ShortcutAction, AccountRecord, AuthResult, Provider } from '@shared/ipc-types'
-import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView } from './webviews'
+import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView, hideActiveView, showActiveView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 import { startGoogleAuthFlow, cancelGoogleAuth } from './auth/google'
 import { startInfomaniakAuthFlow, cancelInfomaniakAuth } from './auth/infomaniak'
@@ -128,6 +128,15 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     destroyView(accountId, win)
     // If no accounts remain, the renderer's onSuccess callback won't fire;
     // the renderer detects zero accounts via GET_ACCOUNTS and routes to onboarding
+  })
+
+  // SET_OVERLAY_OPEN: hide/show active webview while a renderer modal is open
+  ipcMain.handle(IPC_CHANNELS.SET_OVERLAY_OPEN, (_event, open: boolean): void => {
+    if (open) {
+      hideActiveView()
+    } else {
+      showActiveView(win, store.get('sidebarOpen'))
+    }
   })
 
   // Start silent token refresh scheduler

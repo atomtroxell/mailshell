@@ -160,6 +160,21 @@ export function destroyView(tabId: string, win: BrowserWindow): void {
 }
 
 /**
+ * Hides the active WebContentsView so a renderer-layer modal (e.g. settings panel)
+ * can appear. Call showActiveView() to restore it.
+ */
+export function hideActiveView(): void {
+  if (activeTabId) viewPool.get(activeTabId)?.setVisible(false)
+}
+
+/**
+ * Restores the active WebContentsView after a modal is closed.
+ */
+export function showActiveView(win: BrowserWindow, sidebarOpen: boolean): void {
+  if (activeTabId) activateTab(activeTabId, win, sidebarOpen)
+}
+
+/**
  * Returns the raw pool Map — used by Plan 03 shortcut interceptor
  * to attach listeners to each view's webContents.
  */

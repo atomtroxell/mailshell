@@ -58,6 +58,9 @@ const api: MailshellAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.GET_ACCOUNTS),
   removeAccount: (accountId: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.REMOVE_ACCOUNT, accountId),
+  setOverlayOpen: (open: boolean): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.SET_OVERLAY_OPEN, open),
+
   onAuthRefreshFailed: (callback: (accountId: string) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, accountId: string): void => {
       callback(accountId)
