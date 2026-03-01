@@ -3,12 +3,16 @@ import { ipcMain, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { store } from './store'
 import type { InitialState, TabState, ShortcutAction, AccountRecord, AuthResult, Provider } from '@shared/ipc-types'
-import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView, hideActiveView, showActiveView } from './webviews'
+import { activateTab, resizeActiveView, getOrCreateView, getTabsFromAccounts, destroyView } from './webviews'
 import { wireAllShortcuts, registerNewViewCallback, attachShortcutInterceptor } from './shortcuts'
 import { startGoogleAuthFlow, cancelGoogleAuth } from './auth/google'
 import { startInfomaniakAuthFlow, cancelInfomaniakAuth } from './auth/infomaniak'
 import { getAllAccounts, deleteAccount } from './auth/token-store'
 import { startSilentRefreshScheduler } from './auth/refresh'
+import { createSettingsWindow } from './window'
+
+// Track settings window to avoid duplicates
+let settingsWin: BrowserWindow | null = null
 
 export function registerIpcHandlers(win: BrowserWindow): void {
   // GET_INITIAL_STATE: hasAccounts + lastActiveTab + staleCssProviders
@@ -94,7 +98,10 @@ export function registerIpcHandlers(win: BrowserWindow): void {
         const accounts = getAllAccounts()
         const tabs = getTabsFromAccounts(accounts)
         const firstTab = tabs[0]
-        if (firstTab) getOrCreateView(firstTab, win)
+        if (firstTab) {
+          getOrCreateView(firstTab, win)
+          activateTab(firstTab.id, win, store.get('sidebarOpen') as boolean)
+        }
       }
       return result
     }
@@ -104,7 +111,10 @@ export function registerIpcHandlers(win: BrowserWindow): void {
         const accounts = getAllAccounts()
         const tabs = getTabsFromAccounts(accounts)
         const firstNewTab = tabs.find(t => t.id.startsWith('infomaniak-'))
-        if (firstNewTab) getOrCreateView(firstNewTab, win)
+        if (firstNewTab) {
+          getOrCreateView(firstNewTab, win)
+          activateTab(firstNewTab.id, win, store.get('sidebarOpen') as boolean)
+        }
       }
       return result
     }
@@ -122,21 +132,26 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     return getAllAccounts()
   })
 
-  // REMOVE_ACCOUNT: remove account, destroy its WebContentsView, notify renderer
+  // REMOVE_ACCOUNT: remove account, destroy its WebContentsView, notify renderer if last account gone
   ipcMain.handle(IPC_CHANNELS.REMOVE_ACCOUNT, (_event, accountId: string): void => {
     deleteAccount(accountId)
     destroyView(accountId, win)
-    // If no accounts remain, the renderer's onSuccess callback won't fire;
-    // the renderer detects zero accounts via GET_ACCOUNTS and routes to onboarding
+    if (getAllAccounts().length === 0) {
+      // Notify main window to route back to onboarding
+      win.webContents.send(IPC_CHANNELS.SIGNED_OUT)
+      // Close settings window if open
+      if (settingsWin && !settingsWin.isDestroyed()) settingsWin.close()
+    }
   })
 
-  // SET_OVERLAY_OPEN: hide/show active webview while a renderer modal is open
-  ipcMain.handle(IPC_CHANNELS.SET_OVERLAY_OPEN, (_event, open: boolean): void => {
-    if (open) {
-      hideActiveView(win)
-    } else {
-      showActiveView(win, store.get('sidebarOpen'))
+  // OPEN_SETTINGS_WINDOW: open settings as a native child BrowserWindow above WebContentsViews
+  ipcMain.handle(IPC_CHANNELS.OPEN_SETTINGS_WINDOW, (): void => {
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.focus()
+      return
     }
+    settingsWin = createSettingsWindow(win)
+    settingsWin.on('closed', () => { settingsWin = null })
   })
 
   // Start silent token refresh scheduler

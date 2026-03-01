@@ -160,27 +160,6 @@ export function destroyView(tabId: string, win: BrowserWindow): void {
 }
 
 /**
- * Moves the active WebContentsView off-screen so the renderer-layer modal
- * (e.g. settings panel) becomes visible. Moving off-screen (rather than
- * setVisible(false)) preserves document.visibilityState in the webview so
- * providers like Gmail don't switch to a mobile/resource-saving layout.
- */
-export function hideActiveView(win: BrowserWindow): void {
-  const view = activeTabId ? viewPool.get(activeTabId) : null
-  if (!view) return
-  const [winWidth, winHeight] = win.getContentSize()
-  // Park it far to the right at the same size — viewport width unchanged
-  view.setBounds({ x: winWidth + 2000, y: TAB_BAR_HEIGHT_PX, width: winWidth, height: winHeight - TAB_BAR_HEIGHT_PX })
-}
-
-/**
- * Restores the active WebContentsView to its correct on-screen position.
- */
-export function showActiveView(win: BrowserWindow, sidebarOpen: boolean): void {
-  if (activeTabId) activateTab(activeTabId, win, sidebarOpen)
-}
-
-/**
  * Returns the raw pool Map — used by Plan 03 shortcut interceptor
  * to attach listeners to each view's webContents.
  */

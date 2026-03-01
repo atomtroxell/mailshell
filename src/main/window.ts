@@ -100,3 +100,41 @@ export function createMainWindow(): BrowserWindow {
 
   return win
 }
+
+/**
+ * Creates a frameless, transparent child BrowserWindow that overlays the main window.
+ * Loads the same renderer with ?view=settings so App.tsx renders SettingsPanel directly.
+ */
+export function createSettingsWindow(mainWin: BrowserWindow): BrowserWindow {
+  const bounds = mainWin.getBounds()
+
+  const win = new BrowserWindow({
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
+    frame: false,
+    backgroundColor: '#1a1a1a',
+    parent: mainWin,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      preload: getPreloadPath(),
+    },
+  })
+
+  win.once('ready-to-show', () => win.show())
+
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    void win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '?view=settings')
+  } else {
+    void win.loadFile(
+      path.join(app.getAppPath(), `.vite/renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+      { query: { view: 'settings' } }
+    )
+  }
+
+  return win
+}

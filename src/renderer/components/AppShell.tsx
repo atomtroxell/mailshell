@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { TabBar } from './TabBar'
 import { Sidebar } from './Sidebar'
-import { SettingsPanel } from './SettingsPanel'
 import { StaleCssBanner } from './StaleCssBanner'
 import { AuthBanner } from './AuthBanner'
 import type { ServiceTab, AccountRecord } from '@shared/ipc-types'
@@ -14,7 +13,6 @@ export function AppShell({ onSignedOut }: AppShellProps): React.ReactElement {
   const [tabs, setTabs] = useState<ServiceTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
-  const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
   const [failedAuthIds, setFailedAuthIds] = useState<string[]>([])
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
 
@@ -39,6 +37,14 @@ export function AppShell({ onSignedOut }: AppShellProps): React.ReactElement {
     })
     return cleanup
   }, [])
+
+  // Listen for signed-out push from main process (last account removed via settings window)
+  useEffect(() => {
+    const cleanup = window.mailshell.onSignedOut(() => {
+      onSignedOut()
+    })
+    return cleanup
+  }, [onSignedOut])
 
   // Handle tab switch
   const handleTabSwitch = useCallback((tabId: string) => {
@@ -65,7 +71,7 @@ export function AppShell({ onSignedOut }: AppShellProps): React.ReactElement {
       if (action === 'toggle-sidebar') {
         handleToggleSidebar()
       } else if (action === 'open-settings') {
-        setSettingsOpen(true)
+        void window.mailshell.openSettingsWindow()
       } else if (action.startsWith('switch-tab-')) {
         const index = parseInt(action.replace('switch-tab-', ''), 10) - 1
         const target = tabs[index]
@@ -115,7 +121,6 @@ export function AppShell({ onSignedOut }: AppShellProps): React.ReactElement {
         {/* Content area — WebContentsView is positioned here by main process */}
         <div className="content-area" aria-label="Web content" />
       </div>
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} onSignedOut={onSignedOut} />}
     </div>
   )
 }

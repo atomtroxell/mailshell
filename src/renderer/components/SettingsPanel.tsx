@@ -27,8 +27,6 @@ export function SettingsPanel({ onClose, onSignedOut }: SettingsPanelProps): Rea
 
   useEffect(() => {
     window.mailshell.getShortcuts().then(setShortcuts)
-    void window.mailshell.setOverlayOpen(true)
-    return () => { void window.mailshell.setOverlayOpen(false) }
   }, [])
 
   // Reverse map: action -> accelerator

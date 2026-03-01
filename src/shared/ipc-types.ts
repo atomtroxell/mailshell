@@ -65,8 +65,9 @@ export interface MailshellAPI {
   removeAccount: (accountId: string) => Promise<void>
   onAuthRefreshFailed: (callback: (accountId: string) => void) => () => void
 
-  // Overlay: hide/show active WebContentsView while a modal is open
-  setOverlayOpen: (open: boolean) => Promise<void>
+  // Settings window
+  openSettingsWindow: () => Promise<void>
+  onSignedOut: (callback: () => void) => () => void
 }
 
 /** Extend Window to make window.mailshell type-safe in renderer */

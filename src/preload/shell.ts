@@ -58,8 +58,6 @@ const api: MailshellAPI = {
     ipcRenderer.invoke(IPC_CHANNELS.GET_ACCOUNTS),
   removeAccount: (accountId: string): Promise<void> =>
     ipcRenderer.invoke(IPC_CHANNELS.REMOVE_ACCOUNT, accountId),
-  setOverlayOpen: (open: boolean): Promise<void> =>
-    ipcRenderer.invoke(IPC_CHANNELS.SET_OVERLAY_OPEN, open),
 
   onAuthRefreshFailed: (callback: (accountId: string) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, accountId: string): void => {
@@ -67,6 +65,15 @@ const api: MailshellAPI = {
     }
     ipcRenderer.on(IPC_CHANNELS.AUTH_REFRESH_FAILED, handler)
     return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTH_REFRESH_FAILED, handler)
+  },
+
+  openSettingsWindow: (): Promise<void> =>
+    ipcRenderer.invoke(IPC_CHANNELS.OPEN_SETTINGS_WINDOW),
+
+  onSignedOut: (callback: () => void): (() => void) => {
+    const handler = (): void => { callback() }
+    ipcRenderer.on(IPC_CHANNELS.SIGNED_OUT, handler)
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.SIGNED_OUT, handler)
   },
 }
 
