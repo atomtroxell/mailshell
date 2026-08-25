@@ -5,6 +5,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import started from 'electron-squirrel-startup'
 import path from 'path'
 import { createWindow, getMainWindow } from './window'
+import { setupIPC } from './ipc'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
@@ -23,6 +24,9 @@ let mainWindow: BrowserWindow | null = null
 // Create window when app is ready
 app.on('ready', async () => {
   mainWindow = await createWindow()
+  if (mainWindow) {
+    setupIPC(mainWindow)
+  }
 })
 
 // Quit when all windows are closed (standard Windows/Linux behavior)
