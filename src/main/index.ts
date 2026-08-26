@@ -6,6 +6,7 @@ import started from 'electron-squirrel-startup'
 import path from 'path'
 import { createWindow, getMainWindow } from './window'
 import { setupIPC } from './ipc'
+import { validateOAuthConfig } from './auth/oauth-server'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
@@ -23,9 +24,15 @@ let mainWindow: BrowserWindow | null = null
 
 // Create window when app is ready
 app.on('ready', async () => {
-  mainWindow = await createWindow()
-  if (mainWindow) {
-    setupIPC(mainWindow)
+  try {
+    validateOAuthConfig()
+    mainWindow = await createWindow()
+    if (mainWindow) {
+      setupIPC(mainWindow)
+    }
+  } catch (error) {
+    console.error('Failed to initialize app:', (error as Error).message)
+    app.quit()
   }
 })
 

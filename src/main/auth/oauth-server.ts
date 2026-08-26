@@ -8,6 +8,25 @@ const OAUTH_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const OAUTH_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 
+/**
+ * Validate OAuth configuration at startup
+ * Throws if required environment variables are not set
+ */
+export const validateOAuthConfig = (): void => {
+  if (!OAUTH_CLIENT_ID) {
+    throw new Error(
+      'GOOGLE_CLIENT_ID environment variable is not set. ' +
+      'Please set it before starting the app. See .env.example for details.'
+    );
+  }
+  if (!OAUTH_CLIENT_SECRET) {
+    throw new Error(
+      'GOOGLE_CLIENT_SECRET environment variable is not set. ' +
+      'Please set it before starting the app. See .env.example for details.'
+    );
+  }
+};
+
 interface TokenResponse {
   access_token: string;
   refresh_token?: string;

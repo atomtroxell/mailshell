@@ -1,11 +1,11 @@
 {
-  "name": "mailshell",
-  "productName": "Mailshell",
-  "version": "0.1.0",
-  "description": "Unified email and calendar desktop app",
+  "name": "gshell",
+  "productName": "gshell",
+  "version": "1.0.0",
+  "description": "Gmail Electron Wrapper",
   "main": ".vite/build/index.js",
   "private": true,
-  "author": "Mailshell",
+  "author": "AJ Troxell",
   "license": "MIT",
   "scripts": {
     "start": "electron-forge start",

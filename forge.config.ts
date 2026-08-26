@@ -2,6 +2,8 @@ import type { ForgeConfig } from '@electron-forge/shared-types'
 import { VitePlugin } from '@electron-forge/plugin-vite'
 import { FusesPlugin } from '@electron-forge/plugin-fuses'
 import { FuseV1Options, FuseVersion } from '@electron/fuses'
+import MakerSquirrel from '@electron-forge/maker-squirrel'
+import MakerZip from '@electron-forge/maker-zip'
 import path from 'path'
 
 // Security baseline: These settings are applied in BrowserWindow creation (src/main/window.ts)
@@ -16,16 +18,29 @@ const webPreferences = {
 
 const config: ForgeConfig = {
   packagerConfig: {
-    name: 'Mailshell',
-    executableName: 'mailshell',
-    appBundleId: 'com.mailshell.app',
-    appCopyright: 'Copyright 2026 Mailshell',
-    icon: './assets/icons/icon',
+    name: 'gshell',
+    executableName: 'gshell',
+    appBundleId: 'com.gshell.app',
+    appCopyright: 'Copyright 2026 AJ Troxell',
+    // icon: './assets/icons/icon',  // TODO: Add icon files in Phase 2
     asar: true,
     extraResource: ['resources/css'],
   },
   rebuildConfig: {},
-  makers: [],
+  makers: [
+    new MakerSquirrel({
+      name: 'gshell',
+      author: 'AJ Troxell',
+      exe: 'gshell.exe',
+      // setupIcon: './assets/icons/setup.ico',  // TODO: Add icon in Phase 2
+      setupExe: 'gshell-Setup.exe',
+      // msiExec: false,  // Use NSIS by default
+      // Code signing: skip for MVP, enable before production
+      // certificateFile: undefined,  // Path to .pfx cert for production
+      // certificatePassword: undefined,
+    }),
+    new MakerZip({ platforms: ['darwin', 'linux'] }),
+  ],
   plugins: [
     new VitePlugin({
       build: [
