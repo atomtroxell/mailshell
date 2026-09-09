@@ -2,10 +2,12 @@
 // Display and manage saved credentials via native dialogs
 
 import { BrowserWindow, dialog } from 'electron'
-import { getRefreshToken, clearRefreshToken } from './auth/token-store'
+import { clearRefreshToken } from './auth/token-store'
 
 export async function showCredentialsDialog(mainWindow: BrowserWindow): Promise<void> {
-  const hasSavedCredentials = getRefreshToken() !== null
+  // Check if user has an active Gmail session by looking for auth cookies
+  const cookies = await mainWindow.webContents.session.cookies.get({ url: 'https://mail.google.com' })
+  const hasSavedCredentials = cookies.length > 0
 
   if (!hasSavedCredentials) {
     await dialog.showMessageBox(mainWindow, {
