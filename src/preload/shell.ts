@@ -18,9 +18,11 @@ const electronAPI: ElectronAPI = {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
   },
   account: {
-    isSaved: () => ipcRenderer.invoke('account:isSaved'),
+    isSaved: () => ipcRenderer.invoke('account:check-saved'),
     save: () => ipcRenderer.invoke('account:save'),
     remove: () => ipcRenderer.invoke('account:remove'),
+    saveWithDialog: () => ipcRenderer.invoke('account:save-with-dialog'),
+    removeWithDialog: () => ipcRenderer.invoke('account:remove-with-dialog'),
   },
 };
 
