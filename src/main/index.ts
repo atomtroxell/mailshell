@@ -1,13 +1,13 @@
 // src/main/index.ts
 // Electron main process entry point
 
-import { app, BrowserWindow, ipcMain, globalShortcut } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import started from 'electron-squirrel-startup'
 import path from 'path'
 import { createWindow, getMainWindow } from './window'
 import { setupIPC } from './ipc'
 import { validateOAuthConfig } from './auth/oauth-server'
-import { setupAccountManager, handleSaveAccount, handleRemoveAccount } from './account-manager'
+import { setupAppMenu } from './app-menu'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
@@ -35,16 +35,7 @@ app.on('ready', async () => {
     mainWindow = await createWindow()
     if (mainWindow) {
       setupIPC(mainWindow)
-      setupAccountManager(mainWindow)
-
-      // Register keyboard shortcuts for account management
-      globalShortcut.register('Ctrl+Shift+S', () => {
-        handleSaveAccount(mainWindow!).catch(err => console.error('Save failed:', err))
-      })
-
-      globalShortcut.register('Ctrl+Shift+D', () => {
-        handleRemoveAccount(mainWindow!).catch(err => console.error('Remove failed:', err))
-      })
+      setupAppMenu(mainWindow)
     }
   } catch (error) {
     console.error('Failed to initialize app:', (error as Error).message)
@@ -52,14 +43,13 @@ app.on('ready', async () => {
   }
 })
 
-// Unregister shortcuts on quit
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll()
-})
-
 // Quit when all windows are closed (standard Windows/Linux behavior)
+// On macOS, keep app running when all windows closed (user can cmd+Q to quit)
 app.on('window-all-closed', () => {
-  app.quit()
+  // Only quit on Windows/Linux; macOS apps stay running
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
 
 // Re-create window when dock icon is clicked (macOS)
