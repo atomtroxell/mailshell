@@ -22,6 +22,22 @@ export interface ElectronAPI {
      */
     getVersion: () => Promise<string>;
   };
+  account: {
+    /**
+     * Check if current account is saved (refresh token exists)
+     */
+    isSaved: () => Promise<boolean>;
+
+    /**
+     * Save current account (confirm credentials are persisted)
+     */
+    save: () => Promise<void>;
+
+    /**
+     * Remove current account (clear stored credentials)
+     */
+    remove: () => Promise<void>;
+  };
 }
 
 // Extend global Window interface for TypeScript support in renderer

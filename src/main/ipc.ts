@@ -81,6 +81,73 @@ export const setupIPC = (window: BrowserWindow): void => {
       throw new Error('Failed to retrieve version');
     }
   });
+
+  /**
+   * Check if current account is saved (refresh token exists)
+   */
+  ipcMain.handle('account:isSaved', async (event) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      const refreshToken = getRefreshToken();
+      return !!refreshToken;
+    } catch (error) {
+      console.error('Failed to check account status:', (error as Error).message);
+      throw new Error('Failed to check account status');
+    }
+  });
+
+  /**
+   * Save current account (confirm credentials are persisted)
+   * In this phase, tokens are already saved via OAuth flow
+   * This handler serves as confirmation and future expansion point
+   */
+  ipcMain.handle('account:save', async (event) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token available. Please authenticate first.');
+      }
+      // Token already persisted via OAuth flow
+    } catch (error) {
+      console.error('Failed to save account:', (error as Error).message);
+      throw new Error('Failed to save account');
+    }
+  });
+
+  /**
+   * Remove current account (clear stored credentials)
+   */
+  ipcMain.handle('account:remove', async (event) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      // Clear stored refresh token
+      clearRefreshToken();
+
+      // Clear session storage (cookies, localStorage)
+      const session = mainWindow?.webContents.session;
+      if (session) {
+        await session.clearStorageData({
+          storages: ['cookies', 'localstorage'],
+        });
+      }
+    } catch (error) {
+      console.error('Failed to remove account:', (error as Error).message);
+      throw new Error('Failed to remove account');
+    }
+  });
 };
 
 /**

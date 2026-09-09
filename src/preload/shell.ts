@@ -17,6 +17,11 @@ const electronAPI: ElectronAPI = {
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
   },
+  account: {
+    isSaved: () => ipcRenderer.invoke('account:isSaved'),
+    save: () => ipcRenderer.invoke('account:save'),
+    remove: () => ipcRenderer.invoke('account:remove'),
+  },
 };
 
 // Expose only the safe API surface to renderer
