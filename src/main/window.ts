@@ -45,6 +45,9 @@ export async function createWindow(): Promise<BrowserWindow> {
     },
   })
 
+  // Set initial window title with app branding
+  mainWindow.setTitle('Mailshell - Gmail Client')
+
   // Show window when content is ready (prevents visual flash)
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()

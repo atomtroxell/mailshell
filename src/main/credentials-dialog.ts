@@ -97,6 +97,9 @@ async function handleRemoveAccount(mainWindow: BrowserWindow): Promise<void> {
     try {
       clearRefreshToken()
 
+      // Update window title when account is removed
+      mainWindow.setTitle('Mailshell - Gmail Client')
+
       await dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Account Removed',

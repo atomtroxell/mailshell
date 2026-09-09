@@ -19,6 +19,18 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
       ],
     },
     {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Preferences',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            console.log('Preferences clicked - Settings dialog not yet implemented')
+          },
+        },
+      ],
+    },
+    {
       label: 'Account',
       submenu: [
         {

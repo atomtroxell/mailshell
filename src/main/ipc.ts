@@ -143,9 +143,28 @@ export const setupIPC = (window: BrowserWindow): void => {
           storages: ['cookies', 'localstorage'],
         });
       }
+
+      // Update window title when account is removed
+      if (mainWindow) {
+        mainWindow.setTitle('Mailshell - Gmail Client');
+      }
     } catch (error) {
       console.error('Failed to remove account:', (error as Error).message);
       throw new Error('Failed to remove account');
+    }
+  });
+
+  /**
+   * Update window title (called when account status changes)
+   */
+  ipcMain.handle('window:setTitle', (event, title: string) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    if (mainWindow) {
+      mainWindow.setTitle(title);
     }
   });
 };
