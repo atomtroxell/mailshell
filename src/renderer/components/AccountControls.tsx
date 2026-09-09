@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
 interface AccountControlsProps {
   onSave?: () => void;
@@ -18,6 +19,7 @@ export const AccountControls: React.FC<AccountControlsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showConfirmRemove, setShowConfirmRemove] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -32,24 +34,30 @@ export const AccountControls: React.FC<AccountControlsProps> = ({
       const isSaved = await window.electron.account.isSaved();
       onStatusChange?.(isSaved);
       onSave?.();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save account';
       setError(message);
       console.error('Failed to save account:', message);
+      // Clear error message after 3 seconds
+      setTimeout(() => setError(null), 3000);
     } finally {
       setIsLoading(false);
-      // Clear success message after 3 seconds
-      if (success) {
-        setTimeout(() => setSuccess(null), 3000);
-      }
     }
   };
 
-  const handleRemove = async () => {
+  const handleRemoveClick = () => {
+    setShowConfirmRemove(true);
+  };
+
+  const handleConfirmRemove = async () => {
     try {
       setIsLoading(true);
       setError(null);
       setSuccess(null);
+      setShowConfirmRemove(false);
 
       await window.electron.account.remove();
       setSuccess('Account removed successfully');
@@ -58,17 +66,22 @@ export const AccountControls: React.FC<AccountControlsProps> = ({
       const isSaved = await window.electron.account.isSaved();
       onStatusChange?.(isSaved);
       onRemove?.();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove account';
       setError(message);
       console.error('Failed to remove account:', message);
+      // Clear error message after 3 seconds
+      setTimeout(() => setError(null), 3000);
     } finally {
       setIsLoading(false);
-      // Clear success message after 3 seconds
-      if (success) {
-        setTimeout(() => setSuccess(null), 3000);
-      }
     }
+  };
+
+  const handleCancelRemove = () => {
+    setShowConfirmRemove(false);
   };
 
   return (
@@ -91,7 +104,7 @@ export const AccountControls: React.FC<AccountControlsProps> = ({
           {isLoading ? 'Processing...' : 'Save Account'}
         </button>
         <button
-          onClick={handleRemove}
+          onClick={handleRemoveClick}
           disabled={isLoading}
           style={{
             padding: '8px 16px',
@@ -118,6 +131,17 @@ export const AccountControls: React.FC<AccountControlsProps> = ({
           {success}
         </p>
       )}
+
+      <ConfirmDialog
+        isOpen={showConfirmRemove}
+        title="Remove Account?"
+        message="This will remove your saved Gmail account from this device. You can re-authenticate and save it again later."
+        confirmText="Remove Account"
+        cancelText="Keep Account"
+        isDangerous={true}
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancelRemove}
+      />
     </div>
   );
 };

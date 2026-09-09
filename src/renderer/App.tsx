@@ -7,6 +7,13 @@ import AccountControls from './components/AccountControls'
 
 function App() {
   const [accountStatus, setAccountStatus] = useState<boolean | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleStatusChange = (isSaved: boolean) => {
+    setAccountStatus(isSaved)
+    // Force re-check of account status by changing key
+    setRefreshKey(prev => prev + 1)
+  }
 
   return (
     <div style={{ width: '100%', height: '100%', margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
@@ -18,9 +25,9 @@ function App() {
       <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <h2>Account Management</h2>
-          <AccountStatus onStatusChange={setAccountStatus} />
+          <AccountStatus key={refreshKey} onStatusChange={setAccountStatus} />
           <AccountControls
-            onStatusChange={setAccountStatus}
+            onStatusChange={handleStatusChange}
             onSave={() => console.log('Account saved')}
             onRemove={() => console.log('Account removed')}
           />
