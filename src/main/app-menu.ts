@@ -24,9 +24,13 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
       submenu: [
         {
           label: 'Preferences',
-          accelerator: 'CmdOrCtrl+,',
+          accelerator: 'CmdOrCtrl+Shift+P',
           click: async () => {
-            await createSettingsWindow(mainWindow)
+            try {
+              await createSettingsWindow(mainWindow)
+            } catch (error) {
+              console.error('Failed to open settings:', error)
+            }
           },
         },
       ],

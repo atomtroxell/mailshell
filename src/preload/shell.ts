@@ -24,6 +24,11 @@ const electronAPI: ElectronAPI = {
     saveWithDialog: () => ipcRenderer.invoke('account:save-with-dialog'),
     removeWithDialog: () => ipcRenderer.invoke('account:remove-with-dialog'),
   },
+  preferences: {
+    get: () => ipcRenderer.invoke('preferences:get'),
+    set: (key: string, value: any) => ipcRenderer.invoke('preferences:set', key, value),
+    clearCache: () => ipcRenderer.invoke('preferences:clearCache'),
+  },
 };
 
 // Expose only the safe API surface to renderer

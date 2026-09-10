@@ -235,6 +235,22 @@ function validateSender(event: any): boolean {
     return false;
   }
 
-  // Check that the event came from the main window's main frame
-  return event.senderFrame === mainWindow.webContents.mainFrame;
+  // Check that event came from main window's main frame
+  if (event.senderFrame === mainWindow.webContents.mainFrame) {
+    return true;
+  }
+
+  // Also allow calls from child windows (like settings window) that have main window as parent
+  const allWindows = BrowserWindow.getAllWindows();
+  for (const window of allWindows) {
+    if (window.webContents === event.sender) {
+      // Check if this window has the main window as parent
+      const parentId = (window as any).getParentWindow?.()?.id;
+      if (parentId === mainWindow.id) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

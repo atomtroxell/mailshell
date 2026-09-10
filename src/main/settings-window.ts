@@ -32,16 +32,12 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
     },
   });
 
-  // Load URL - in dev mode use Vite dev server, in production use built files
-  let url: string;
-  if (process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    // Dev mode: load from Vite dev server
-    url = `${process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL}#/settings`;
-  } else {
-    // Production: load from built files
-    const htmlPath = path.join(app.getAppPath(), '.vite/renderer/main_window/index.html');
-    url = `file://${htmlPath}#/settings`;
-  }
+  // Hide menu bar in settings window
+  settingsWindow.removeMenu();
+
+  // Load settings.html - simple standalone HTML without React/Vite dependency
+  const htmlPath = path.join(app.getAppPath(), 'src/renderer/settings.html');
+  const url = `file://${htmlPath}`;
 
   await settingsWindow.loadURL(url);
 
