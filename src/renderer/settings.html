@@ -121,17 +121,6 @@
   <section>
     <h2>Data Management</h2>
     <div>
-      <label for="dataRetention" style="display: block; margin-bottom: 8px; font-weight: 500; cursor: default; padding: 0;">
-        Data Retention
-      </label>
-      <select id="dataRetention">
-        <option value="7days">7 days</option>
-        <option value="30days">30 days</option>
-        <option value="90days">90 days</option>
-        <option value="never">Never delete</option>
-      </select>
-    </div>
-    <div>
       <button id="clearCacheBtn" type="button">Clear Cache</button>
       <p class="button-desc">Clears browsing data and cached files</p>
     </div>
@@ -152,13 +141,11 @@
       showError('Settings API not available');
     }
 
-    // Load preferences
+    // Load preferences (currently none needed for basic settings)
     async function loadPreferences() {
       try {
-        const prefs = await preferences.get();
-
-        // Set data retention
-        document.getElementById('dataRetention').value = prefs.dataRetention;
+        // Preferences loaded (for future use)
+        await preferences.get();
       } catch (error) {
         showError(`Failed to load preferences: ${error.message}`);
         console.error('Failed to load preferences:', error);
@@ -174,16 +161,6 @@
         console.error('Failed to get version:', error);
       }
     }
-
-    // Handle data retention change
-    document.getElementById('dataRetention').addEventListener('change', async (e) => {
-      try {
-        await preferences.set('dataRetention', e.target.value);
-        showSuccess('Data retention updated');
-      } catch (error) {
-        showError(`Failed to update data retention: ${error.message}`);
-      }
-    });
 
     // Handle clear cache
     document.getElementById('clearCacheBtn').addEventListener('click', async () => {
