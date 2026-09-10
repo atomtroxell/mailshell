@@ -199,6 +199,20 @@ export const setupIPC = (window: BrowserWindow): void => {
       const prefs = await loadPreferences();
       prefs[key] = value;
       await savePreferences(prefs);
+
+      // Apply CSS changes immediately if gmailCSSEnabled changed
+      if (key === 'gmailCSSEnabled' && mainWindow) {
+        if (value) {
+          // Import here to avoid circular dependency
+          const { GMAIL_CSS_PRESETS } = await import('./gmail-css');
+          mainWindow.webContents.insertCSS(GMAIL_CSS_PRESETS);
+          console.log('Gmail CSS presets re-applied');
+        } else {
+          // CSS removal via insertCSS is not directly supported
+          // Reload page to clear CSS (or user can reload manually)
+          console.log('Gmail CSS presets disabled (manual reload recommended)');
+        }
+      }
     } catch (error) {
       console.error('Failed to set preference:', (error as Error).message);
       throw new Error('Failed to set preference');

@@ -3,9 +3,12 @@
 
 import { BrowserWindow, app } from 'electron'
 import path from 'path'
+import { GMAIL_CSS_PRESETS } from './gmail-css'
+import { loadPreferences } from './preferences'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
+let gmailCSSInjected = false
 
 /**
  * Get the preload script path.
@@ -56,9 +59,26 @@ export async function createWindow(): Promise<BrowserWindow> {
   // Load Gmail
   mainWindow.loadURL('https://mail.google.com')
 
+  // Inject CSS presets when Gmail is ready
+  mainWindow.webContents.on('dom-ready', async () => {
+    try {
+      const prefs = await loadPreferences()
+      // gmailCSSEnabled defaults to true if not set
+      const cssEnabled = prefs.gmailCSSEnabled !== false
+      if (cssEnabled && !gmailCSSInjected) {
+        mainWindow?.webContents.insertCSS(GMAIL_CSS_PRESETS)
+        gmailCSSInjected = true
+        console.log('Gmail CSS presets applied')
+      }
+    } catch (error) {
+      console.error('Failed to load preferences for CSS injection:', error)
+    }
+  })
+
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null
+    gmailCSSInjected = false
   })
 
   // Handle unresponsive renderer

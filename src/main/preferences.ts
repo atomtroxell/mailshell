@@ -13,6 +13,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   autoUpdate: true,
   dataRetention: '30days',
+  gmailCSSEnabled: true,
   version: '1.0.0',
 };
 

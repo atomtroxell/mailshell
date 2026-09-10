@@ -117,6 +117,16 @@
   <div id="error" class="message error"></div>
   <div id="success" class="message success"></div>
 
+  <!-- Gmail Customization section -->
+  <section>
+    <h2>Gmail Customization</h2>
+    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; margin: 0;">
+      <input type="checkbox" id="gmailCSSEnabled" style="cursor: pointer;" />
+      <span>Enable Gmail UI presets</span>
+    </label>
+    <p class="help-text" style="margin-left: 32px;">Applies CSS improvements for cleaner, more readable Gmail interface</p>
+  </section>
+
   <!-- Data Management section -->
   <section>
     <h2>Data Management</h2>
@@ -141,11 +151,11 @@
       showError('Settings API not available');
     }
 
-    // Load preferences (currently none needed for basic settings)
+    // Load preferences
     async function loadPreferences() {
       try {
-        // Preferences loaded (for future use)
-        await preferences.get();
+        const prefs = await preferences.get();
+        document.getElementById('gmailCSSEnabled').checked = prefs.gmailCSSEnabled;
       } catch (error) {
         showError(`Failed to load preferences: ${error.message}`);
         console.error('Failed to load preferences:', error);
@@ -161,6 +171,16 @@
         console.error('Failed to get version:', error);
       }
     }
+
+    // Handle Gmail CSS toggle
+    document.getElementById('gmailCSSEnabled').addEventListener('change', async (e) => {
+      try {
+        await preferences.set('gmailCSSEnabled', e.target.checked);
+        showSuccess(e.target.checked ? 'Gmail UI presets enabled' : 'Gmail UI presets disabled');
+      } catch (error) {
+        showError(`Failed to update Gmail CSS setting: ${error.message}`);
+      }
+    });
 
     // Handle clear cache
     document.getElementById('clearCacheBtn').addEventListener('click', async () => {
