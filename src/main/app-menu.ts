@@ -3,6 +3,7 @@
 
 import { Menu, BrowserWindow } from 'electron'
 import { showCredentialsDialog } from './credentials-dialog'
+import { createSettingsWindow } from './settings-window'
 
 export function setupAppMenu(mainWindow: BrowserWindow): void {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -24,8 +25,8 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
         {
           label: 'Preferences',
           accelerator: 'CmdOrCtrl+,',
-          click: () => {
-            console.log('Preferences clicked - Settings dialog not yet implemented')
+          click: async () => {
+            await createSettingsWindow(mainWindow)
           },
         },
       ],

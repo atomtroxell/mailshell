@@ -3,6 +3,13 @@
  * Only safe methods are exposed; ipcRenderer is never directly accessible
  */
 
+export interface Preferences {
+  theme: 'light' | 'dark' | 'system';
+  autoUpdate: boolean;
+  dataRetention: '7days' | '30days' | '90days' | 'never';
+  version: string;
+}
+
 export interface ElectronAPI {
   auth: {
     /**
@@ -47,6 +54,22 @@ export interface ElectronAPI {
      * Remove account with confirmation dialog (shows warning)
      */
     removeWithDialog: () => Promise<boolean>;
+  };
+  preferences: {
+    /**
+     * Get current preferences
+     */
+    get: () => Promise<Preferences>;
+
+    /**
+     * Set a preference value
+     */
+    set: (key: keyof Preferences, value: any) => Promise<void>;
+
+    /**
+     * Clear browser cache and session storage
+     */
+    clearCache: () => Promise<boolean>;
   };
 }
 

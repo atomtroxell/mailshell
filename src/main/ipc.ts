@@ -1,5 +1,6 @@
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, session } from 'electron';
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
+import { loadPreferences, savePreferences, type Preferences } from './preferences';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -165,6 +166,62 @@ export const setupIPC = (window: BrowserWindow): void => {
 
     if (mainWindow) {
       mainWindow.setTitle(title);
+    }
+  });
+
+  /**
+   * Get current preferences
+   */
+  ipcMain.handle('preferences:get', async (event) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      return await loadPreferences();
+    } catch (error) {
+      console.error('Failed to load preferences:', (error as Error).message);
+      throw new Error('Failed to load preferences');
+    }
+  });
+
+  /**
+   * Set a preference value
+   */
+  ipcMain.handle('preferences:set', async (event, key: keyof Preferences, value: any) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      const prefs = await loadPreferences();
+      prefs[key] = value;
+      await savePreferences(prefs);
+    } catch (error) {
+      console.error('Failed to set preference:', (error as Error).message);
+      throw new Error('Failed to set preference');
+    }
+  });
+
+  /**
+   * Clear browser cache and session storage
+   */
+  ipcMain.handle('preferences:clearCache', async (event) => {
+    // Validate sender is the main window
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+
+    try {
+      // Get the persistent session used for Gmail
+      const gshellSession = session.fromPartition('persist:gshell');
+      await gshellSession.clearCache();
+      return true;
+    } catch (error) {
+      console.error('Failed to clear cache:', (error as Error).message);
+      return false;
     }
   });
 };
