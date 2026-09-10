@@ -32,12 +32,16 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
     },
   });
 
-  // Load URL - use file:// protocol with app path
-  const htmlPath = app.isPackaged
-    ? path.join(app.getAppPath(), 'dist', 'index.html')
-    : path.join(app.getAppPath(), '.vite', 'build', 'index.html');
-
-  const url = `file://${htmlPath}#/settings`;
+  // Load URL - in dev mode use Vite dev server, in production use built files
+  let url: string;
+  if (process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    // Dev mode: load from Vite dev server
+    url = `${process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL}#/settings`;
+  } else {
+    // Production: load from built files
+    const htmlPath = path.join(app.getAppPath(), '.vite/renderer/main_window/index.html');
+    url = `file://${htmlPath}#/settings`;
+  }
 
   await settingsWindow.loadURL(url);
 
