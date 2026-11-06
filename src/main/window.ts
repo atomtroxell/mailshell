@@ -52,6 +52,8 @@ export async function createWindow(): Promise<BrowserWindow> {
     minWidth: 800,
     minHeight: 600,
     show: false, // Don't show until ready-to-show
+    // Menu bar stays hidden until Alt is pressed; shortcuts still work
+    autoHideMenuBar: true,
     backgroundColor: darkAwareBackground(nativeTheme.shouldUseDarkColors),
     webPreferences: {
       // Persistent partition: CRITICAL for session persistence
