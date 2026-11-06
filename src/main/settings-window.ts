@@ -1,4 +1,4 @@
-import { BrowserWindow, app } from 'electron';
+import { BrowserWindow, app, type WebContents } from 'electron';
 import path from 'path';
 import { THEME_VARS } from './theme-css';
 
@@ -308,6 +308,10 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
     settingsWindow = null;
   });
 };
+
+// Used by ipc.ts to authorise IPC senders by webContents identity
+export const getSettingsWebContents = (): WebContents | null =>
+  settingsWindow && !settingsWindow.isDestroyed() ? settingsWindow.webContents : null;
 
 /**
  * Close settings window if open
