@@ -73,10 +73,14 @@ div[aria-label^="Status:"] {
   display: none !important;
 }
 
-/* --- Shorter header bar (64px -> 48px) --- */
+/* --- Shorter header bar (64px -> 48px); header row scaled to fit --- */
 header#gb {
   height: 48px !important;
   min-height: 48px !important;
+}
+
+header#gb .gb_Vd {
+  zoom: 0.75;
 }
 
 /* --- Hide account-activity / Terms / Privacy / Program Policies footer --- */
