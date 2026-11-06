@@ -1,16 +1,21 @@
 // src/main/window.ts
 // BrowserWindow creation with persistent session partition for Gmail
 
-import { BrowserWindow, app, dialog, net } from 'electron'
+import { BrowserWindow, app, dialog, net, nativeTheme } from 'electron'
 import path from 'path'
 import { applyGmailCSS } from './gmail-css'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
+import { applyGmailDark, darkAwareBackground, isThemePreference } from './gmail-dark'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
 // Guards against stacking not-responding dialogs
 let unresponsiveDialogOpen = false
+// The nativeTheme 'updated' listener is registered once for the app lifetime
+let themeListenerRegistered = false
+// Last effective dark state seen, so high-contrast/inverted changes are ignored
+let lastDark: boolean | null = null
 
 /**
  * Get the preload script path.
@@ -29,12 +34,25 @@ function getPreloadPath(): string {
  * log out.
  */
 export async function createWindow(): Promise<BrowserWindow> {
+  // Apply the saved theme before any window exists so a Dark preference
+  // does not flash white. Invalid stored values fall back to 'system'.
+  const startupPrefs = await loadPreferences()
+  if (isThemePreference(startupPrefs.theme)) {
+    nativeTheme.themeSource = startupPrefs.theme
+  } else {
+    nativeTheme.themeSource = 'system'
+    console.warn('Invalid theme preference; using system')
+  }
+  console.info('Theme source:', nativeTheme.themeSource)
+  lastDark = nativeTheme.shouldUseDarkColors
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
     show: false, // Don't show until ready-to-show
+    backgroundColor: darkAwareBackground(nativeTheme.shouldUseDarkColors),
     webPreferences: {
       // Persistent partition: CRITICAL for session persistence
       // Must start with 'persist:' for Electron to treat it as persistent
@@ -81,7 +99,22 @@ export async function createWindow(): Promise<BrowserWindow> {
     } catch (error) {
       console.error('Failed to load preferences for CSS injection:', error)
     }
+    // Dark layer is independent of the presets; never throws
+    await applyGmailDark(contents, nativeTheme.shouldUseDarkColors)
   })
+
+  // Follow theme changes (preference or OS) once, for whichever window is current
+  if (!themeListenerRegistered) {
+    themeListenerRegistered = true
+    nativeTheme.on('updated', () => {
+      const dark = nativeTheme.shouldUseDarkColors
+      if (dark === lastDark) return
+      lastDark = dark
+      if (!mainWindow || mainWindow.isDestroyed()) return
+      mainWindow.setBackgroundColor(darkAwareBackground(dark))
+      void applyGmailDark(mainWindow.webContents, dark)
+    })
+  }
 
   // Load Gmail (rejection ignored: did-fail-load owns the UI)
   mainWindow.loadURL('https://mail.google.com').catch(() => undefined)
