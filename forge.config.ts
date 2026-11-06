@@ -22,9 +22,9 @@ const config: ForgeConfig = {
     executableName: 'gshell',
     appBundleId: 'com.gshell.app',
     appCopyright: 'Copyright 2026 AJ Troxell',
-    // icon: './assets/icons/icon',  // TODO: Add icon files in Phase 2
+    icon: './assets/icons/icon',
     asar: true,
-    extraResource: ['resources/css'],
+    extraResource: ['resources/css', 'assets/icons/icon.ico'],
   },
   rebuildConfig: {},
   makers: [
@@ -32,7 +32,7 @@ const config: ForgeConfig = {
       name: 'gshell',
       author: 'AJ Troxell',
       exe: 'gshell.exe',
-      // setupIcon: './assets/icons/setup.ico',  // TODO: Add icon in Phase 2
+      setupIcon: './assets/icons/icon.ico',
       setupExe: 'gshell-Setup.exe',
       // msiExec: false,  // Use NSIS by default
       // Code signing: skip for MVP, enable before production

@@ -26,6 +26,16 @@ function getPreloadPath(): string {
 }
 
 /**
+ * Window icon. In a packaged build the icon ships as an extraResource
+ * (see forge.config.ts); in development it is read from the project folder.
+ */
+function windowIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'assets/icons/icon.ico')
+    : path.join(app.getAppPath(), 'assets/icons/icon.ico')
+}
+
+/**
  * Create the main BrowserWindow with persistent session partition.
  *
  * The 'persist:gshell' partition enables automatic session storage
@@ -54,6 +64,7 @@ export async function createWindow(): Promise<BrowserWindow> {
     show: false, // Don't show until ready-to-show
     // Menu bar stays hidden until Alt is pressed; shortcuts still work
     autoHideMenuBar: true,
+    icon: windowIconPath(),
     backgroundColor: darkAwareBackground(nativeTheme.shouldUseDarkColors),
     webPreferences: {
       // Persistent partition: CRITICAL for session persistence
