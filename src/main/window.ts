@@ -6,7 +6,7 @@ import path from 'path'
 import { applyGmailCSS } from './gmail-css'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
-import { applyGmailDark, darkAwareBackground, isThemePreference } from './gmail-dark'
+import { darkAwareBackground, isThemePreference } from './theme-css'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
@@ -99,8 +99,6 @@ export async function createWindow(): Promise<BrowserWindow> {
     } catch (error) {
       console.error('Failed to load preferences for CSS injection:', error)
     }
-    // Dark layer is independent of the presets; never throws
-    await applyGmailDark(contents, nativeTheme.shouldUseDarkColors)
   })
 
   // Follow theme changes (preference or OS) once, for whichever window is current
@@ -112,7 +110,6 @@ export async function createWindow(): Promise<BrowserWindow> {
       lastDark = dark
       if (!mainWindow || mainWindow.isDestroyed()) return
       mainWindow.setBackgroundColor(darkAwareBackground(dark))
-      void applyGmailDark(mainWindow.webContents, dark)
     })
   }
 

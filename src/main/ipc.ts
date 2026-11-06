@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow, session, nativeTheme, type IpcMainInvokeEvent }
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
 import { applyGmailCSS } from './gmail-css';
-import { applyGmailDark, isThemePreference } from './gmail-dark';
+import { isThemePreference } from './theme-css';
 import { decideSender, type SenderPolicy } from './ipc-sender-policy';
 import { getSettingsWebContents } from './settings-window';
 
@@ -215,13 +215,10 @@ export const setupIPC = (window: BrowserWindow): void => {
         await applyGmailCSS(mainWindow.webContents, value === true);
       }
 
-      // Theme: drive nativeTheme, then re-apply the Gmail dark layer. The
-      // window.ts 'updated' listener owns the window background colour.
+      // Theme: drive nativeTheme. The window.ts 'updated' listener owns the
+      // window background colour. Gmail itself is not styled (use Gmail's theme).
       if (key === 'theme' && isThemePreference(value)) {
         nativeTheme.themeSource = value;
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          await applyGmailDark(mainWindow.webContents, nativeTheme.shouldUseDarkColors);
-        }
       }
     } catch (error) {
       console.error('Failed to set preference:', (error as Error).message);
