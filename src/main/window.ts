@@ -80,6 +80,15 @@ export async function createWindow(): Promise<BrowserWindow> {
 
   const contents = mainWindow.webContents
 
+  // Alt alone toggles the auto-hidden menu bar. Electron's built-in Alt
+  // handling does not fire reliably while the page has focus.
+  contents.on('before-input-event', (_event, input) => {
+    if (input.type === 'keyUp' && input.key === 'Alt' && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setMenuBarVisibility(!mainWindow.isMenuBarVisible())
+      console.info('Menu bar toggled by Alt')
+    }
+  })
+
   // Main-frame load failures show the error page. Subframes, aborted
   // navigations (redirects) and the error page itself are ignored.
   contents.on('did-fail-load', (_event, errorCode, _errorDescription, validatedURL, isMainFrame) => {
