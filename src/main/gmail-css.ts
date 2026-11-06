@@ -65,6 +65,20 @@ div.s1rbBe {
   display: none !important;
 }
 
+/* --- Minimal header: hide Studio, Ask Gemini and the Active status --- */
+div[aria-label="Studio"],
+header#gb [aria-label*="Gemini"],
+header#gb .yIGn2b,
+div[aria-label^="Status:"] {
+  display: none !important;
+}
+
+/* --- Shorter header bar (64px -> 48px) --- */
+header#gb {
+  height: 48px !important;
+  min-height: 48px !important;
+}
+
 /* --- Hide account-activity / Terms / Privacy / Program Policies footer --- */
 div.apO {
   display: none !important;
