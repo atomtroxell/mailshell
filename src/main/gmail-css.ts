@@ -92,6 +92,16 @@ div.T-I.T-I-KE {
   zoom: 0.7;
 }
 
+/* --- Compact right side panel (Calendar, Keep, Tasks, Contacts) --- */
+div[role="complementary"][aria-label="Side panel"] {
+  zoom: 0.8;
+}
+
+/* --- Compact reply bar at the bottom of an open thread --- */
+div.nH.btDi4d {
+  zoom: 0.8;
+}
+
 /* --- Hide account-activity / Terms / Privacy / Program Policies footer --- */
 div.apO {
   display: none !important;
