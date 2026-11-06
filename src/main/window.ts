@@ -1,7 +1,7 @@
 // src/main/window.ts
 // BrowserWindow creation with persistent session partition for Gmail
 
-import { BrowserWindow, app, dialog, net, nativeTheme } from 'electron'
+import { BrowserWindow, app, dialog, net, nativeTheme, shell } from 'electron'
 import path from 'path'
 import { applyGmailCSS } from './gmail-css'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
@@ -33,6 +33,30 @@ function windowIconPath(): string {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'assets/icons/icon.ico')
     : path.join(app.getAppPath(), 'assets/icons/icon.ico')
+}
+
+// Hosts that stay inside Mailshell: Google sign-in and Gmail's own pop-outs
+const IN_APP_HOSTS = ['mail.google.com', 'accounts.google.com', 'chat.google.com', 'meet.google.com']
+
+function isInAppUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname
+    return IN_APP_HOSTS.some((domain) => host === domain || host.endsWith('.' + domain))
+  } catch {
+    return false
+  }
+}
+
+/** Open a web link in the user's default browser. Other schemes are ignored. */
+function openExternalIfWeb(url: string): void {
+  try {
+    const { protocol } = new URL(url)
+    if (protocol === 'https:' || protocol === 'http:') {
+      shell.openExternal(url).catch((error) => console.error('Failed to open link:', error))
+    }
+  } catch {
+    // Not a parseable URL: nothing to open
+  }
 }
 
 /**
@@ -90,6 +114,23 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   const contents = mainWindow.webContents
+
+  // Google sign-in and Gmail's own pop-outs stay in the app. Any other web
+  // link opens in the user's default browser.
+  contents.setWindowOpenHandler(({ url }) => {
+    if (url === 'about:blank' || isInAppUrl(url)) {
+      return { action: 'allow', overrideBrowserWindowOptions: { icon: windowIconPath() } }
+    }
+    openExternalIfWeb(url)
+    return { action: 'deny' }
+  })
+
+  // A link that would navigate the main window to another site opens in the browser
+  contents.on('will-navigate', (event, url) => {
+    if (isInAppUrl(url) || url.startsWith('data:')) return
+    event.preventDefault()
+    openExternalIfWeb(url)
+  })
 
   // Alt alone toggles the auto-hidden menu bar. Electron's built-in Alt
   // handling does not fire reliably while the page has focus.
