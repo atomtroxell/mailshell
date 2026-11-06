@@ -18,9 +18,9 @@ export const GMAIL_CSS_PRESETS = `
                             (split view), not "No split" mode; each
                             Gmail build marks split-view differently,
                             so both known markers are listed explicitly
-   3. Header-variant     — Workspace vs personal header markup differs
-                            slightly (gb_af vs gb_bf); each scoped to
-                            its own variant so neither overrides the other
+   3. Header search      — search form margin and column alignment;
+                            matched on form[role="search"] and .gb_af
+                            because the variant-specific chains don't match
    ========================================================================== */
 
 /* ============ 1. SHARED RULES ============ */
@@ -41,8 +41,11 @@ div[role="navigation"].aeN {
   background-color: #ffffff !important;
 }
 
-/* --- Hide Gmail logo --- */
-header#gb .gb_3c {
+/* --- Hide Gmail logo ---
+   The visible logo is an <a aria-label="Gmail"> wrapping an <img>. The
+   previous .gb_3c class does not exist on this Gmail build. The hidden
+   duplicate link in the header is also matched; it is already invisible. */
+header#gb a[aria-label="Gmail"] {
   display: none !important;
 }
 
@@ -147,19 +150,19 @@ tr.zA.btb {
   margin-left: 0 !important;
 }
 
-/* ============ 3. HEADER-VARIANT RULES ============
-   Personal accounts use container class gb_af on the search flex column;
-   Workspace accounts use gb_bf instead (and add an extra 68px margin-left
-   on the search form itself). Scoped separately so fixing one never
-   touches the other. */
+/* ============ 3. HEADER SEARCH ALIGNMENT ============
+   The search form carries a 68px margin-left on this build. The earlier
+   variant-scoped selectors (gb_2d.gb_ae.gb_Ue.gb_8e + gb_af / gb_bf) never
+   matched, because the header markup does not have those class chains.
+   Target the form and its column directly. */
 
-/* --- Personal account: left-align search bar (was centered) --- */
-header#gb .gb_2d.gb_ae.gb_Ue.gb_8e.gb_af {
+/* --- Left-align the search column (was centered) --- */
+header#gb .gb_af {
   justify-content: flex-start !important;
 }
 
-/* --- Workspace account: remove the extra 68px margin pushing search right --- */
-header#gb .gb_2d.gb_ae.gb_Ue.gb_8e.gb_bf form[role="search"] {
+/* --- Remove the extra 68px margin pushing the search bar right --- */
+header#gb form[role="search"] {
   margin-left: 0 !important;
 }
 `;
