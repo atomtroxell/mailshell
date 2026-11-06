@@ -2,6 +2,8 @@ import { BrowserWindow, app, type WebContents } from 'electron';
 import path from 'path';
 import { THEME_VARS } from './theme-css';
 
+const GMAIL_THEMES_URL = 'https://mail.google.com/mail/u/0/#settings/themes';
+
 let settingsWindow: BrowserWindow | null = null;
 
 function getPreloadPath(): string {
@@ -104,6 +106,21 @@ ${THEME_VARS}
       font-weight: 500;
       transition: background-color 0.2s;
     }
+    .btn-link {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: var(--btn-bg);
+      color: var(--btn-fg);
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn-link:hover {
+      background-color: var(--btn-hover);
+    }
     button:hover:not(:disabled) {
       background-color: var(--btn-hover);
     }
@@ -135,7 +152,8 @@ ${THEME_VARS}
     <label><input type="radio" name="theme" value="system" id="themeSystem" /> Use system setting</label>
     <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
     <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
-    <p class="help-text">Dark mode inverts the colours of the Gmail page. If you picked a dark theme in Gmail's own settings, it will look light here; choose Gmail's default theme for best results. Windows system dialogs (sign-in credentials, Not responding, About) keep the light Windows style.</p>
+    <p class="help-text">Applies to Mailshell's own windows and Windows dialogs. To make Gmail dark, use Gmail's own Dark theme.</p>
+    <a id="gmail-themes" class="btn-link" href="https://mail.google.com/mail/u/0/#settings/themes">Open Gmail themes</a>
   </section>
 
   <!-- Gmail Customization section -->
@@ -291,6 +309,17 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
 
   // Hide menu bar in settings window
   settingsWindow.removeMenu();
+
+  // The only allowed navigation is the Gmail Themes link, which opens in the
+  // main window. Everything else is blocked; no new windows.
+  settingsWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    if (url === GMAIL_THEMES_URL && !mainWindow.isDestroyed()) {
+      mainWindow.loadURL(GMAIL_THEMES_URL).catch(() => undefined);
+      mainWindow.focus();
+    }
+  });
+  settingsWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
   // Load embedded HTML as data URL
   const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(SETTINGS_HTML)}`;
