@@ -1,14 +1,17 @@
-import { ipcMain, BrowserWindow, session, nativeTheme } from 'electron';
+import { ipcMain, BrowserWindow, session, nativeTheme, type IpcMainInvokeEvent } from 'electron';
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
 import { applyGmailCSS } from './gmail-css';
 import { applyGmailDark, isThemePreference } from './gmail-dark';
+import { decideSender, type SenderPolicy } from './ipc-sender-policy';
+import { getSettingsWebContents } from './settings-window';
 
 let mainWindow: BrowserWindow | null = null;
 
 /**
  * Register all IPC handlers for secure communication with renderer process
- * All handlers validate that requests come from the main window
+ * All handlers validate the sender with validateSender (Settings window; the
+ * error page for preferences:clearCache only)
  */
 export const setupIPC = (window: BrowserWindow): void => {
   mainWindow = window;
@@ -231,7 +234,8 @@ export const setupIPC = (window: BrowserWindow): void => {
    */
   ipcMain.handle('preferences:clearCache', async (event) => {
     // Validate sender is the main window
-    if (!validateSender(event)) {
+    // The error page's Clear cache button is the only main-window caller allowed
+    if (!validateSender(event, 'settings-or-error-page')) {
       throw new Error('Unauthorized IPC call');
     }
 
@@ -248,30 +252,23 @@ export const setupIPC = (window: BrowserWindow): void => {
 };
 
 /**
- * Validate that an IPC event came from the main window
- * Prevents malicious scripts from other windows from accessing IPC handlers
+ * Validate the sender of an IPC call. Allowed callers: the Settings window
+ * (all channels) and the main window's data: error page (clearCache only,
+ * via the 'settings-or-error-page' policy). Gmail is always rejected.
+ * Never log the frame URL; only the fixed reason code.
  */
-function validateSender(event: any): boolean {
-  if (!mainWindow) {
+function validateSender(event: IpcMainInvokeEvent, policy: SenderPolicy = 'settings-only'): boolean {
+  const decision = decideSender(
+    event,
+    {
+      settingsContents: getSettingsWebContents(),
+      mainContents: mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null,
+    },
+    policy
+  );
+  if (decision !== 'ok') {
+    console.warn('Rejected IPC sender:', decision);
     return false;
   }
-
-  // Check that event came from main window's main frame
-  if (event.senderFrame === mainWindow.webContents.mainFrame) {
-    return true;
-  }
-
-  // Also allow calls from child windows (like settings window) that have main window as parent
-  const allWindows = BrowserWindow.getAllWindows();
-  for (const window of allWindows) {
-    if (window.webContents === event.sender) {
-      // Check if this window has the main window as parent
-      const parentId = (window as any).getParentWindow?.()?.id;
-      if (parentId === mainWindow.id) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  return true;
 }
