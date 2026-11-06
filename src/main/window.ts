@@ -1,13 +1,16 @@
 // src/main/window.ts
 // BrowserWindow creation with persistent session partition for Gmail
 
-import { BrowserWindow, app } from 'electron'
+import { BrowserWindow, app, dialog, net } from 'electron'
 import path from 'path'
 import { applyGmailCSS } from './gmail-css'
+import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
+// Guards against stacking not-responding dialogs
+let unresponsiveDialogOpen = false
 
 /**
  * Get the preload script path.
@@ -55,13 +58,22 @@ export async function createWindow(): Promise<BrowserWindow> {
     mainWindow?.show()
   })
 
-  // Load Gmail
-  mainWindow.loadURL('https://mail.google.com')
+  const contents = mainWindow.webContents
+
+  // Main-frame load failures show the error page. Subframes, aborted
+  // navigations (redirects) and the error page itself are ignored.
+  contents.on('did-fail-load', (_event, errorCode, _errorDescription, validatedURL, isMainFrame) => {
+    if (!isMainFrame) return
+    if (errorCode === NET_ERROR.ABORTED) return
+    if (validatedURL.startsWith('data:')) return
+    console.error('Main frame load failed:', errorCode, sanitizeUrlForLog(validatedURL))
+    if (mainWindow) showErrorPage(mainWindow, classifyLoadError(errorCode, net.isOnline()), errorCode)
+  })
 
   // Apply CSS presets on every page load (dom-ready fires again after a
   // reload or full navigation, and inserted CSS is dropped by navigation)
-  const contents = mainWindow.webContents
   contents.on('dom-ready', async () => {
+    if (contents.getURL().startsWith('data:')) return
     try {
       const prefs = await loadPreferences()
       // gmailCSSEnabled defaults to true if not set
@@ -71,20 +83,48 @@ export async function createWindow(): Promise<BrowserWindow> {
     }
   })
 
+  // Load Gmail (rejection ignored: did-fail-load owns the UI)
+  mainWindow.loadURL('https://mail.google.com').catch(() => undefined)
+
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 
-  // Handle unresponsive renderer
-  mainWindow.webContents.on('unresponsive', () => {
-    console.warn('Window became unresponsive, offering reload...')
-    mainWindow?.webContents.forcefullyCrashRenderer()
+  // Handle unresponsive renderer: ask the user instead of force-crashing
+  contents.on('unresponsive', () => {
+    console.warn('Gmail became unresponsive')
+    if (unresponsiveDialogOpen || !mainWindow || mainWindow.isDestroyed()) return
+    unresponsiveDialogOpen = true
+    const win = mainWindow
+    dialog
+      .showMessageBox(win, {
+        type: 'warning',
+        buttons: ['Wait', 'Reload Gmail'],
+        defaultId: 0,
+        cancelId: 0,
+        title: 'Gmail is not responding',
+        message: 'Gmail is not responding.',
+        detail: 'Wait for it to recover, or reload Gmail. Unsaved drafts in Gmail may be lost if you reload.',
+      })
+      .then(({ response }) => {
+        if (response === 1 && !win.isDestroyed()) win.webContents.reload()
+      })
+      .catch((e) => console.error('Not-responding dialog failed:', e))
+      .finally(() => {
+        unresponsiveDialogOpen = false
+      })
+  })
+
+  contents.on('responsive', () => {
+    console.info('Gmail is responsive again')
   })
 
   // Handle crashed or killed renderer ('crashed' event no longer exists in Electron)
-  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+  contents.on('render-process-gone', (_event, details) => {
     console.error('Renderer process gone:', details.reason)
+    if (details.reason === 'clean-exit') return
+    if (mainWindow && !mainWindow.isDestroyed()) showErrorPage(mainWindow, 'crash')
   })
 
   return mainWindow
