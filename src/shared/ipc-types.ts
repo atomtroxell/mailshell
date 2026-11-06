@@ -45,16 +45,6 @@ export interface ElectronAPI {
      * Remove current account (clear stored credentials)
      */
     remove: () => Promise<void>;
-
-    /**
-     * Save account with confirmation dialog
-     */
-    saveWithDialog: () => Promise<boolean>;
-
-    /**
-     * Remove account with confirmation dialog (shows warning)
-     */
-    removeWithDialog: () => Promise<boolean>;
   };
   preferences: {
     /**
