@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow, session } from 'electron';
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
+import { applyGmailCSS } from './gmail-css';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -197,21 +198,12 @@ export const setupIPC = (window: BrowserWindow): void => {
 
     try {
       const prefs = await loadPreferences();
-      prefs[key] = value;
+      Object.assign(prefs, { [key]: value });
       await savePreferences(prefs);
 
-      // Apply CSS changes immediately if gmailCSSEnabled changed
+      // Apply the CSS presets change to the open Gmail page immediately
       if (key === 'gmailCSSEnabled' && mainWindow) {
-        if (value) {
-          // Import here to avoid circular dependency
-          const { GMAIL_CSS_PRESETS } = await import('./gmail-css');
-          mainWindow.webContents.insertCSS(GMAIL_CSS_PRESETS);
-          console.log('Gmail CSS presets re-applied');
-        } else {
-          // CSS removal via insertCSS is not directly supported
-          // Reload page to clear CSS (or user can reload manually)
-          console.log('Gmail CSS presets disabled (manual reload recommended)');
-        }
+        await applyGmailCSS(mainWindow.webContents, value === true);
       }
     } catch (error) {
       console.error('Failed to set preference:', (error as Error).message);

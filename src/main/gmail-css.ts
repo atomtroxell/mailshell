@@ -4,219 +4,189 @@
  * Focuses on: cleaner layout, better spacing, improved readability
  */
 
+import type { WebContents } from 'electron';
+
 export const GMAIL_CSS_PRESETS = `
-/* Overall improvements */
-body {
-  line-height: 1.5;
+/* ==========================================================================
+   Gmail Custom Stylesheet
+   Built by inspecting the live DOM — selectors verified working.
+   Style: clean / minimal
+
+   Structure:
+   1. Shared rules       — apply everywhere, no known divergence
+   2. Split-view-scoped  — only fire when a reading pane is active
+                            (split view), not "No split" mode; each
+                            Gmail build marks split-view differently,
+                            so both known markers are listed explicitly
+   3. Header-variant     — Workspace vs personal header markup differs
+                            slightly (gb_af vs gb_bf); each scoped to
+                            its own variant so neither overrides the other
+   ========================================================================== */
+
+/* ============ 1. SHARED RULES ============ */
+
+/* --- Overall page background --- */
+body.aAU {
+  background-color: #f5f6f8 !important;
 }
 
-/* Sidebar improvements - compact and clean */
-div[role="navigation"] {
-  background-color: #f8f9fa;
-  border-right: 1px solid #dadce0;
+/* --- Top header bar (logo, search, icons) --- */
+header#gb {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
 }
 
-/* Compose area - better spacing */
-div[data-tooltip="Compose"] {
-  margin-bottom: 12px;
+/* --- Left icon rail (nav) --- */
+div[role="navigation"].aeN {
+  background-color: #ffffff !important;
 }
 
-/* Mail list improvements - better readability */
-table tbody tr {
-  border-bottom: 1px solid #f0f0f0;
+/* --- Hide Gmail logo --- */
+header#gb .gb_3c {
+  display: none !important;
 }
 
-table tbody tr:hover {
-  background-color: #f9f9f9;
+/* --- Collapse the reserved logo column so search isn't pushed right --- */
+header#gb .gb_2d.gb_Ad.gb_Bd {
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
 }
 
-/* Thread list - cleaner appearance */
-div[role="listbox"] {
-  background-color: #ffffff;
+/* --- Hide Support (?) button --- */
+a[aria-label="Support"] {
+  display: none !important;
 }
 
-/* Header/toolbar improvements */
-div[role="toolbar"] {
-  border-bottom: 1px solid #dadce0;
-  padding: 8px 12px;
+/* --- Hide Upgrade button/link (and its tooltip) --- */
+div.s1rbBe {
+  display: none !important;
 }
 
-/* Button styling - subtle improvement */
-button[aria-label],
-div[role="button"] {
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+/* --- Hide account-activity / Terms / Privacy / Program Policies footer --- */
+div.apO {
+  display: none !important;
 }
 
-button[aria-label]:hover,
-div[role="button"]:hover {
-  background-color: #f1f3f4;
+/* --- Sidebar item typography --- */
+.TO .nU > .n0,
+.TO.NQ .nU > .n0,
+.TO.nZ .nU > .n0,
+.ah9 > .CJ,
+.n3 > .CL > .CK {
+  font-size: 0.8rem !important;
+  letter-spacing: -0.3px !important;
 }
 
-/* Text improvements - better font rendering */
-div.gs {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+/* --- Remove empty spacer cell in inbox rows (read + unread variants) --- */
+td.xY.bnk.aZ5.aHR,
+td.xY.bnk.aZ5 {
+  display: none !important;
 }
 
-/* Remove excessive padding in various areas */
-div[role="main"] {
-  padding: 0 12px;
+/* --- Uniform font size across email list rows (sender, subject, snippet, date) --- */
+tr.zA .yW,
+tr.zA .yW *,
+tr.zA .y6,
+tr.zA .y6 *,
+tr.zA td.xW,
+tr.zA td.xW * {
+  font-size: 0.875rem !important;
 }
 
-/* Subject line - clearer typography */
-span[data-subject-line] {
-  font-size: 15px;
-  font-weight: 500;
-  color: #202124;
+/* --- No left padding on search form container --- */
+.gb_Te {
+  padding-left: 0 !important;
 }
 
-/* Sender name - better contrast */
-span[email] {
-  font-size: 13px;
-  color: #5f6368;
+/* --- Remove box-shadow on email rows: hover state and selected/open row --- */
+tr.zA:hover,
+tr.zA.btb {
+  box-shadow: none !important;
 }
 
-/* Thread timestamp - subtle styling */
-span.ZW {
-  color: #80868b;
-  font-size: 12px;
+/* --- Subject is never bold, even on unread emails (sender stays bold) --- */
+tr.zA .bqe {
+  font-weight: 400 !important;
 }
 
-/* Reduce unnecessary spacing in compose */
-div.I4 {
-  margin: 8px 0;
+/* --- White background on emails in the list, whether read or unread --- */
+tr.zA,
+tr.zA.yO {
+  background-color: #ffffff !important;
 }
 
-/* Better spacing for labels */
-span[role="img"] {
-  margin-right: 6px;
+/* --- Open/selected row gets the old "read" tint instead --- */
+tr.zA.btb {
+  background-color: rgb(242, 246, 252) !important;
 }
 
-/* Attachment area - cleaner */
-div[role="img"][data-tooltip*="attachment"] {
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 4px 8px;
-  margin: 4px 0;
+/* ============ 2. SPLIT-VIEW-SCOPED RULES ============
+   These only apply when a reading pane is active (split view), not
+   "No split" mode. Different Gmail builds mark split-view differently
+   on the same .ae4 wrapper:
+     - personal-account build: .ae4.aDM.aAF
+     - Workspace-account build: .ae4.Zs
+   Both are listed explicitly so each build is targeted independently;
+   if a future build uses yet another marker, add it here rather than
+   changing the shared rules above. */
+
+/* --- Force labels, subject, and snippet each onto their own line --- */
+.ae4.aDM.aAF tr.zA .xT .yi,
+.ae4.aDM.aAF tr.zA .xT .y6,
+.ae4.aDM.aAF tr.zA .xT .y2,
+.ae4.Zs tr.zA .xT .yi,
+.ae4.Zs tr.zA .xT .y6,
+.ae4.Zs tr.zA .xT .y2 {
+  flex: 1 1 100% !important;
+  width: 100% !important;
 }
 
-/* Search bar improvements */
-input[role="combobox"][aria-label*="Search"] {
-  border: 1px solid #dadce0;
-  border-radius: 24px;
-  padding: 10px 16px;
-  background-color: #f1f3f4;
+/* --- Remove left margin on label chip container --- */
+.ae4.aDM.aAF tr.zA .xT .yi,
+.ae4.Zs tr.zA .xT .yi {
+  margin-left: 0 !important;
 }
 
-input[role="combobox"][aria-label*="Search"]:focus {
-  background-color: #ffffff;
-  box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+/* ============ 3. HEADER-VARIANT RULES ============
+   Personal accounts use container class gb_af on the search flex column;
+   Workspace accounts use gb_bf instead (and add an extra 68px margin-left
+   on the search form itself). Scoped separately so fixing one never
+   touches the other. */
+
+/* --- Personal account: left-align search bar (was centered) --- */
+header#gb .gb_2d.gb_ae.gb_Ue.gb_8e.gb_af {
+  justify-content: flex-start !important;
 }
 
-/* Reduce excessive whitespace in email view */
-div[role="presentation"] div[style*="height"] {
-  margin: 4px 0;
-}
-
-/* Better spacing for email body text */
-div[data-is-quoted-text="false"] {
-  word-break: break-word;
-  padding: 12px 0;
-}
-
-/* Conversation list - cleaner separators */
-div[role="listitem"] {
-  border-bottom: 1px solid #efefef;
-  padding: 8px 0;
-}
-
-div[role="listitem"]:last-child {
-  border-bottom: none;
-}
-
-/* Labels and tags - better styling */
-a[data-label-id] {
-  background-color: #e8eaed;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  margin-right: 4px;
-}
-
-/* Unread indicator - subtle highlight */
-div[data-is-read="false"] {
-  font-weight: 500;
-}
-
-/* Archive/delete buttons - cleaner appearance */
-div[aria-label*="Delete"],
-div[aria-label*="Archive"],
-div[aria-label*="Spam"] {
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-
-div[aria-label*="Delete"]:hover,
-div[aria-label*="Archive"]:hover,
-div[aria-label*="Spam"]:hover {
-  opacity: 1;
-  background-color: #f1f3f4;
-}
-
-/* Scrollbar styling - subtle */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+/* --- Workspace account: remove the extra 68px margin pushing search right --- */
+header#gb .gb_2d.gb_ae.gb_Ue.gb_8e.gb_bf form[role="search"] {
+  margin-left: 0 !important;
 }
 `;
 
-/**
- * Inject Gmail CSS presets into the page
- * Creates a <style> tag with all preset rules
- */
-export function injectGmailCSS(): void {
-  try {
-    // Check if CSS is already injected
-    if (document.getElementById('mailshell-gmail-presets')) {
-      return;
-    }
-
-    // Create and inject style tag
-    const styleTag = document.createElement('style');
-    styleTag.id = 'mailshell-gmail-presets';
-    styleTag.textContent = GMAIL_CSS_PRESETS;
-    document.head.appendChild(styleTag);
-
-    console.log('Mailshell Gmail CSS presets injected');
-  } catch (error) {
-    console.error('Failed to inject Gmail CSS presets:', error);
-  }
-}
+/** Key from the last insertCSS call, needed to remove the presets later. */
+let activeCSSKey: string | null = null;
 
 /**
- * Remove Gmail CSS presets from the page
+ * Apply or remove the Gmail CSS presets on the given page.
+ *
+ * Uses webContents.insertCSS, so the CSS is added from the main process and
+ * is not blocked by Gmail's page CSP. removeInsertedCSS lets the Settings
+ * toggle take effect without a reload.
+ *
+ * Call on every dom-ready: inserted CSS is dropped when the page navigates.
  */
-export function removeGmailCSS(): void {
+export async function applyGmailCSS(contents: WebContents, enabled: boolean): Promise<void> {
   try {
-    const styleTag = document.getElementById('mailshell-gmail-presets');
-    if (styleTag) {
-      styleTag.remove();
-      console.log('Mailshell Gmail CSS presets removed');
+    if (activeCSSKey) {
+      // Old key may already be gone after a navigation; ignore that failure.
+      await contents.removeInsertedCSS(activeCSSKey).catch(() => undefined);
+      activeCSSKey = null;
+    }
+    if (enabled) {
+      activeCSSKey = await contents.insertCSS(GMAIL_CSS_PRESETS);
     }
   } catch (error) {
-    console.error('Failed to remove Gmail CSS presets:', error);
+    console.error('Failed to apply Gmail CSS presets:', error);
   }
 }

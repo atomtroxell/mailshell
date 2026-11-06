@@ -3,12 +3,11 @@
 
 import { BrowserWindow, app } from 'electron'
 import path from 'path'
-import { GMAIL_CSS_PRESETS } from './gmail-css'
+import { applyGmailCSS } from './gmail-css'
 import { loadPreferences } from './preferences'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
-let gmailCSSInjected = false
 
 /**
  * Get the preload script path.
@@ -59,17 +58,14 @@ export async function createWindow(): Promise<BrowserWindow> {
   // Load Gmail
   mainWindow.loadURL('https://mail.google.com')
 
-  // Inject CSS presets when Gmail is ready
-  mainWindow.webContents.on('dom-ready', async () => {
+  // Apply CSS presets on every page load (dom-ready fires again after a
+  // reload or full navigation, and inserted CSS is dropped by navigation)
+  const contents = mainWindow.webContents
+  contents.on('dom-ready', async () => {
     try {
       const prefs = await loadPreferences()
       // gmailCSSEnabled defaults to true if not set
-      const cssEnabled = prefs.gmailCSSEnabled !== false
-      if (cssEnabled && !gmailCSSInjected) {
-        mainWindow?.webContents.insertCSS(GMAIL_CSS_PRESETS)
-        gmailCSSInjected = true
-        console.log('Gmail CSS presets applied')
-      }
+      await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
     } catch (error) {
       console.error('Failed to load preferences for CSS injection:', error)
     }
@@ -78,7 +74,6 @@ export async function createWindow(): Promise<BrowserWindow> {
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null
-    gmailCSSInjected = false
   })
 
   // Handle unresponsive renderer
@@ -87,9 +82,9 @@ export async function createWindow(): Promise<BrowserWindow> {
     mainWindow?.webContents.forcefullyCrashRenderer()
   })
 
-  // Handle crashed renderer
-  mainWindow.webContents.on('crashed', () => {
-    console.error('Renderer crashed')
+  // Handle crashed or killed renderer ('crashed' event no longer exists in Electron)
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('Renderer process gone:', details.reason)
   })
 
   return mainWindow

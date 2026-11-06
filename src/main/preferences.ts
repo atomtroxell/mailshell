@@ -6,6 +6,7 @@ export interface Preferences {
   theme: 'light' | 'dark' | 'system';
   autoUpdate: boolean;
   dataRetention: '7days' | '30days' | '90days' | 'never';
+  gmailCSSEnabled: boolean;
   version: string;
 }
 
