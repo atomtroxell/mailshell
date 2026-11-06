@@ -4,6 +4,8 @@
 import { Menu, BrowserWindow } from 'electron'
 import { showCredentialsDialog } from './credentials-dialog'
 import { createSettingsWindow } from './settings-window'
+import { createShortcutsWindow } from './shortcuts-window'
+import { acceleratorFor } from '../shared/shortcuts'
 
 export function setupAppMenu(mainWindow: BrowserWindow): void {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -12,7 +14,7 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
       submenu: [
         {
           label: 'Exit',
-          accelerator: 'CmdOrCtrl+Q',
+          accelerator: acceleratorFor('exit'),
           click: () => {
             mainWindow.close()
           },
@@ -22,9 +24,17 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
     {
       label: 'Edit',
       submenu: [
+        { role: 'undo', accelerator: acceleratorFor('undo') },
+        { role: 'redo', accelerator: acceleratorFor('redo') },
+        { type: 'separator' },
+        { role: 'cut', accelerator: acceleratorFor('cut') },
+        { role: 'copy', accelerator: acceleratorFor('copy') },
+        { role: 'paste', accelerator: acceleratorFor('paste') },
+        { role: 'selectAll', accelerator: acceleratorFor('selectAll') },
+        { type: 'separator' },
         {
           label: 'Preferences',
-          accelerator: 'CmdOrCtrl+Shift+P',
+          accelerator: acceleratorFor('preferences'),
           click: async () => {
             try {
               await createSettingsWindow(mainWindow)
@@ -36,11 +46,21 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
       ],
     },
     {
+      label: 'View',
+      submenu: [
+        { role: 'reload', accelerator: acceleratorFor('reload') },
+        { type: 'separator' },
+        { role: 'resetZoom', accelerator: acceleratorFor('resetZoom') },
+        { role: 'zoomIn', accelerator: acceleratorFor('zoomIn') },
+        { role: 'zoomOut', accelerator: acceleratorFor('zoomOut') },
+      ],
+    },
+    {
       label: 'Account',
       submenu: [
         {
           label: 'Manage Credentials',
-          accelerator: 'CmdOrCtrl+Shift+A',
+          accelerator: acceleratorFor('credentials'),
           click: async () => {
             await showCredentialsDialog(mainWindow)
           },
@@ -50,6 +70,18 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
     {
       label: 'Help',
       submenu: [
+        {
+          label: 'Keyboard Shortcuts',
+          accelerator: acceleratorFor('shortcuts'),
+          click: async () => {
+            try {
+              await createShortcutsWindow(mainWindow)
+            } catch (error) {
+              console.error('Failed to open keyboard shortcuts:', error)
+            }
+          },
+        },
+        { type: 'separator' },
         {
           label: 'About Mailshell',
           click: () => {
