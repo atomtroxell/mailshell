@@ -83,6 +83,15 @@ header#gb .gb_Vd {
   zoom: 0.75;
 }
 
+/* --- Compact left rail (Mail / Chat) and compose button --- */
+div[role="navigation"] {
+  zoom: 0.85;
+}
+
+div.T-I.T-I-KE {
+  zoom: 0.7;
+}
+
 /* --- Hide account-activity / Terms / Privacy / Program Policies footer --- */
 div.apO {
   display: none !important;
