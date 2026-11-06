@@ -4,6 +4,7 @@
 import { BrowserWindow } from 'electron'
 import { SHORTCUTS, formatAccelerator, ShortcutGroup } from '../shared/shortcuts'
 import { escapeHtml } from '../shared/html'
+import { THEME_VARS } from './theme-css'
 
 const GROUP_ORDER: ShortcutGroup[] = ['App', 'Edit', 'View', 'Account', 'Help']
 
@@ -29,27 +30,28 @@ export function buildShortcutsHtml(platform: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
 <title>Keyboard Shortcuts</title>
 <style>
+${THEME_VARS}
   html, body { margin: 0; padding: 0; height: 100%; }
   body {
     font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #202124;
+    background: var(--bg-alt);
+    color: var(--fg-strong);
     padding: 16px 20px;
     box-sizing: border-box;
     overflow-y: auto;
   }
   h1 { font-size: 18px; margin: 0 0 12px; }
-  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #5f6368; margin: 16px 0 6px; }
-  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; }
-  td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-alt); margin: 16px 0 6px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 6px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
   td.keys { text-align: right; white-space: nowrap; }
   kbd {
     display: inline-block; min-width: 18px; padding: 2px 6px; text-align: center;
-    font: 12px 'Segoe UI', sans-serif; background: #fafafa; border: 1px solid #ccc;
+    font: 12px 'Segoe UI', sans-serif; background: var(--kbd-bg); border: 1px solid var(--border);
     border-bottom-width: 2px; border-radius: 4px;
   }
-  p { font-size: 13px; color: #3c4043; line-height: 1.4; }
-  .hint { font-size: 12px; color: #5f6368; }
+  p { font-size: 13px; color: var(--fg-strong); line-height: 1.4; }
+  .hint { font-size: 12px; color: var(--muted-alt); }
 </style>
 </head>
 <body>

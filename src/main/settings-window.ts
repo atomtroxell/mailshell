@@ -1,5 +1,6 @@
 import { BrowserWindow, app } from 'electron';
 import path from 'path';
+import { THEME_VARS } from './theme-css';
 
 let settingsWindow: BrowserWindow | null = null;
 
@@ -15,6 +16,7 @@ const SETTINGS_HTML = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Settings - Mailshell</title>
   <style>
+${THEME_VARS}
     * {
       margin: 0;
       padding: 0;
@@ -22,8 +24,8 @@ const SETTINGS_HTML = `<!DOCTYPE html>
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: #fff;
-      color: #333;
+      background: var(--bg);
+      color: var(--fg);
       padding: 20px;
       font-size: 14px;
     }
@@ -36,7 +38,7 @@ const SETTINGS_HTML = `<!DOCTYPE html>
     h2 {
       font-size: 16px;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--fg-strong);
       margin-bottom: 12px;
       margin-top: 0;
     }
@@ -51,15 +53,15 @@ const SETTINGS_HTML = `<!DOCTYPE html>
       display: none;
     }
     .error {
-      background-color: #ffebee;
-      color: #c62828;
+      background-color: var(--err-bg);
+      color: var(--err-fg);
     }
     .success {
-      background-color: #e8f5e9;
-      color: #2e7d32;
+      background-color: var(--ok-bg);
+      color: var(--ok-fg);
     }
     .help-text {
-      color: #666;
+      color: var(--muted);
       font-size: 13px;
       margin: 0 0 12px 0;
     }
@@ -74,7 +76,7 @@ const SETTINGS_HTML = `<!DOCTYPE html>
       margin-bottom: 8px;
     }
     label:hover {
-      background-color: #f0f0f0;
+      background-color: var(--hover);
     }
     input[type="radio"], input[type="checkbox"] {
       cursor: pointer;
@@ -82,19 +84,19 @@ const SETTINGS_HTML = `<!DOCTYPE html>
     select {
       width: 100%;
       padding: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border);
       border-radius: 4px;
       font-size: 14px;
       font-family: inherit;
       cursor: pointer;
-      background-color: white;
-      color: #333;
+      background-color: var(--surface);
+      color: var(--fg);
       margin-bottom: 8px;
     }
     button {
       padding: 8px 16px;
-      background-color: #1f2937;
-      color: white;
+      background-color: var(--btn-bg);
+      color: var(--btn-fg);
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -103,7 +105,7 @@ const SETTINGS_HTML = `<!DOCTYPE html>
       transition: background-color 0.2s;
     }
     button:hover:not(:disabled) {
-      background-color: #111827;
+      background-color: var(--btn-hover);
     }
     button:disabled {
       opacity: 0.6;
@@ -112,10 +114,10 @@ const SETTINGS_HTML = `<!DOCTYPE html>
     .button-desc {
       margin-top: 8px;
       font-size: 12px;
-      color: #666;
+      color: var(--muted);
     }
     .version {
-      color: #999;
+      color: var(--faint);
       font-size: 12px;
       margin: 0;
     }
@@ -126,6 +128,15 @@ const SETTINGS_HTML = `<!DOCTYPE html>
 
   <div id="error" class="message error"></div>
   <div id="success" class="message success"></div>
+
+  <!-- Appearance section -->
+  <section>
+    <h2>Appearance</h2>
+    <label><input type="radio" name="theme" value="system" id="themeSystem" /> Use system setting</label>
+    <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
+    <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
+    <p class="help-text">Dark mode inverts the colours of the Gmail page. If you picked a dark theme in Gmail's own settings, it will look light here; choose Gmail's default theme for best results. Windows system dialogs (sign-in credentials, Not responding, About) keep the light Windows style.</p>
+  </section>
 
   <!-- Gmail Customization section -->
   <section>
@@ -166,6 +177,9 @@ const SETTINGS_HTML = `<!DOCTYPE html>
       try {
         const prefs = await preferences.get();
         document.getElementById('gmailCSSEnabled').checked = prefs.gmailCSSEnabled;
+        const theme = ['light', 'dark', 'system'].includes(prefs.theme) ? prefs.theme : 'system';
+        const themeRadio = document.querySelector('input[name="theme"][value="' + theme + '"]');
+        if (themeRadio) themeRadio.checked = true;
       } catch (error) {
         showError(\`Failed to load preferences: \${error.message}\`);
         console.error('Failed to load preferences:', error);
@@ -190,6 +204,20 @@ const SETTINGS_HTML = `<!DOCTYPE html>
       } catch (error) {
         showError(\`Failed to update Gmail CSS setting: \${error.message}\`);
       }
+    });
+
+    // Handle theme radios (fixed messages only; the value is never put in HTML)
+    const THEME_MESSAGES = { system: 'Theme: system setting', light: 'Theme: light', dark: 'Theme: dark' };
+    document.querySelectorAll('input[name="theme"]').forEach((radio) => {
+      radio.addEventListener('change', async (e) => {
+        try {
+          await preferences.set('theme', e.target.value);
+          showSuccess(THEME_MESSAGES[e.target.value] || 'Theme updated');
+        } catch (error) {
+          showError('Failed to update theme');
+          loadPreferences();
+        }
+      });
     });
 
     // Handle clear cache
@@ -249,7 +277,7 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
 
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 600,
+    height: 720,
     modal: true,
     parent: mainWindow,
     show: false,

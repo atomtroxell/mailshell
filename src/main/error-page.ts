@@ -5,6 +5,7 @@
 
 import { BrowserWindow } from 'electron'
 import { escapeHtml } from '../shared/html'
+import { THEME_VARS } from './theme-css'
 
 export type ErrorKind = 'offline' | 'timeout' | 'cert' | 'crash' | 'unknown'
 
@@ -97,13 +98,14 @@ export function buildErrorHtml(kind: ErrorKind, reference: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
 <title>Mailshell - Gmail unavailable</title>
 <style>
-  body { font-family: system-ui, sans-serif; background: #f6f8fc; color: #202124; margin: 0; display: flex; justify-content: center; padding: 64px 16px; }
+${THEME_VARS}
+  body { font-family: system-ui, sans-serif; background: var(--bg-alt); color: var(--fg-strong); margin: 0; display: flex; justify-content: center; padding: 64px 16px; }
   main { max-width: 480px; }
   h1 { font-size: 24px; font-weight: 500; }
-  a#retry, button { display: inline-block; font-size: 14px; padding: 8px 16px; border-radius: 4px; border: 1px solid #1a73e8; cursor: pointer; margin-right: 8px; }
-  a#retry { background: #1a73e8; color: #fff; text-decoration: none; }
-  button { background: #fff; color: #1a73e8; }
-  .small { color: #5f6368; font-size: 12px; margin-top: 24px; }
+  a#retry, button { display: inline-block; font-size: 14px; padding: 8px 16px; border-radius: 4px; border: 1px solid var(--link); cursor: pointer; margin-right: 8px; }
+  a#retry { background: var(--link); color: var(--link-fg); text-decoration: none; }
+  button { background: var(--surface); color: var(--link); }
+  .small { color: var(--muted-alt); font-size: 12px; margin-top: 24px; }
 </style>
 </head>
 <body>
