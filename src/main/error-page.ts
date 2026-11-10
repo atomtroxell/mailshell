@@ -52,11 +52,11 @@ export function classifyLoadError(code: number, online: boolean): ErrorKind {
 const ERROR_COPY: Record<ErrorKind, { title: string; body: string; steps: readonly string[] }> = {
   offline: {
     title: "Can't reach Gmail",
-    body: "Mailshell couldn't connect to Gmail.",
+    body: "MailShell couldn't connect to Gmail.",
     steps: [
       'Check your internet connection.',
       'If you use a VPN or proxy, check that it is connected.',
-      'Mailshell will try again automatically when your connection comes back.',
+      'MailShell will try again automatically when your connection comes back.',
     ],
   },
   timeout: {
@@ -66,7 +66,7 @@ const ERROR_COPY: Record<ErrorKind, { title: string; body: string; steps: readon
   },
   cert: {
     title: 'Secure connection failed',
-    body: "Mailshell couldn't verify Gmail's security certificate.",
+    body: "MailShell couldn't verify Gmail's security certificate.",
     steps: [
       "Check that your computer's date and time are correct.",
       'Security software or network filtering can cause this. Try another network.',
@@ -96,7 +96,7 @@ export function buildErrorHtml(kind: ErrorKind, reference: string): string {
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
-<title>Mailshell - Gmail unavailable</title>
+<title>MailShell - Gmail unavailable</title>
 <style>
 ${THEME_VARS}
   body { font-family: system-ui, sans-serif; background: var(--bg-alt); color: var(--fg-strong); margin: 0; display: flex; justify-content: center; padding: 64px 16px; }

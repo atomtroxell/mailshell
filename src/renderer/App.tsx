@@ -24,7 +24,7 @@ function App() {
   // Default: show placeholder (this is for the main window which loads Gmail directly)
   return (
     <div style={{ width: '100%', height: '100%', margin: 0, padding: 0 }}>
-      <h1>Mailshell</h1>
+      <h1>MailShell</h1>
       <p>Loading Gmail...</p>
     </div>
   )

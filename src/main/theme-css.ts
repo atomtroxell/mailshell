@@ -1,5 +1,5 @@
 // src/main/theme-css.ts
-// Shared light/dark CSS variables for Mailshell's own data: pages (Settings,
+// Shared light/dark CSS variables for MailShell's own data: pages (Settings,
 // Keyboard Shortcuts, error page). Static string, interpolated into each
 // page's <style> block. Pages follow nativeTheme.themeSource through
 // prefers-color-scheme; no JS is involved.

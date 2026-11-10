@@ -1,0 +1,26 @@
+# Builds the Windows installer (with a license page) from the app that
+# Electron Forge packages. Run `npm run installer` after `npm run make`'s package step.
+appId: com.mailshell.app
+productName: MailShell
+copyright: Copyright 2026 AJ Troxell. Licensed under the MIT License.
+directories:
+  output: out/installer
+win:
+  icon: assets/icons/icon.ico
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  license: build/legal/installer-license.txt
+  include: build/installer.nsh
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: MailShell
+  uninstallDisplayName: MailShell
+  installerIcon: assets/icons/icon.ico
+  uninstallerIcon: assets/icons/icon.ico
+  installerHeaderIcon: assets/icons/icon.ico
+  deleteAppDataOnUninstall: false
+  artifactName: mailshell-${version}-Setup.${ext}

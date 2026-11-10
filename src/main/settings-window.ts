@@ -16,7 +16,7 @@ const SETTINGS_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Settings - Mailshell</title>
+  <title>Settings - MailShell</title>
   <style>
 ${THEME_VARS}
     * {
@@ -152,7 +152,7 @@ ${THEME_VARS}
     <label><input type="radio" name="theme" value="system" id="themeSystem" /> Use system setting</label>
     <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
     <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
-    <p class="help-text">Applies to Mailshell's own windows and Windows dialogs. To make Gmail dark, use Gmail's own Dark theme.</p>
+    <p class="help-text">Applies to MailShell, Gmail and Windows dialogs. System follows your Windows setting.</p>
     <a id="gmail-themes" class="btn-link" href="https://mail.google.com/mail/u/0/#settings/themes">Open Gmail themes</a>
   </section>
 
@@ -178,7 +178,7 @@ ${THEME_VARS}
   <!-- About section -->
   <section>
     <h2>About</h2>
-    <p class="help-text">Mailshell - Gmail Client</p>
+    <p class="help-text">MailShell - Gmail Client</p>
     <p class="version" id="version">Version <span></span></p>
   </section>
 

@@ -12,7 +12,7 @@ export interface ShortcutDef {
 
 // Ids for undo..zoomOut match Electron role names so the menu can use them for both role and accelerator.
 export const SHORTCUTS = [
-  { id: 'exit', accelerator: 'CmdOrCtrl+Q', label: 'Exit Mailshell', group: 'App' },
+  { id: 'exit', accelerator: 'CmdOrCtrl+Q', label: 'Exit MailShell', group: 'App' },
   { id: 'preferences', accelerator: 'CmdOrCtrl+Shift+P', label: 'Open Settings', group: 'App' },
   { id: 'undo', accelerator: 'CmdOrCtrl+Z', label: 'Undo', group: 'Edit' },
   { id: 'redo', accelerator: 'CmdOrCtrl+Y', label: 'Redo', group: 'Edit' },
@@ -20,6 +20,7 @@ export const SHORTCUTS = [
   { id: 'copy', accelerator: 'CmdOrCtrl+C', label: 'Copy', group: 'Edit' },
   { id: 'paste', accelerator: 'CmdOrCtrl+V', label: 'Paste', group: 'Edit' },
   { id: 'selectAll', accelerator: 'CmdOrCtrl+A', label: 'Select All', group: 'Edit' },
+  { id: 'toggleSidebar', accelerator: 'CmdOrCtrl+Shift+B', label: 'Show or Hide Sidebar', group: 'View' },
   { id: 'reload', accelerator: 'CmdOrCtrl+R', label: 'Reload Gmail', group: 'View' },
   { id: 'resetZoom', accelerator: 'CmdOrCtrl+0', label: 'Actual Size', group: 'View' },
   { id: 'zoomIn', accelerator: 'CmdOrCtrl+=', label: 'Zoom In', group: 'View' },

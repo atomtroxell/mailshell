@@ -4,18 +4,14 @@ import * as path from 'path';
 
 export interface Preferences {
   theme: 'light' | 'dark' | 'system';
-  autoUpdate: boolean;
-  dataRetention: '7days' | '30days' | '90days' | 'never';
   gmailCSSEnabled: boolean;
   version: string;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
-  autoUpdate: true,
-  dataRetention: '30days',
   gmailCSSEnabled: true,
-  version: '1.0.0',
+  version: '0.1.0-beta.1',
 };
 
 const PREFERENCES_FILE = path.join(app.getPath('userData'), 'preferences.json');

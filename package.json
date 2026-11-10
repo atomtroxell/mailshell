@@ -1,19 +1,20 @@
 {
-  "name": "gshell",
-  "productName": "gshell",
-  "version": "1.0.0",
-  "description": "Gmail Electron Wrapper",
+  "name": "mailshell",
+  "productName": "MailShell",
+  "version": "0.1.0-beta.1",
+  "description": "MailShell - a free desktop app for Gmail",
   "main": ".vite/build/index.js",
   "private": true,
   "author": "AJ Troxell",
   "license": "MIT",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
+    "start": "node scripts/stamp-legal.mjs && electron-forge start",
+    "package": "node scripts/stamp-legal.mjs && electron-forge package",
+    "make": "node scripts/stamp-legal.mjs && electron-forge make",
     "publish": "electron-forge publish",
-    "build": "electron-forge package",
-    "lint": "eslint --ext .ts,.tsx src/"
+    "build": "node scripts/stamp-legal.mjs && electron-forge package",
+    "lint": "eslint --ext .ts,.tsx src/",
+    "installer": "npm run package && electron-builder --prepackaged out/MailShell-win32-x64 --config electron-builder.yml --win nsis"
   },
   "keywords": [],
   "devDependencies": {
@@ -34,6 +35,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "dotenv": "^17.3.1",
     "electron": "40.6.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",

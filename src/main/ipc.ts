@@ -1,7 +1,16 @@
-import { ipcMain, BrowserWindow, session, nativeTheme, type IpcMainInvokeEvent } from 'electron';
+import { app, ipcMain, BrowserWindow, session, nativeTheme, type IpcMainInvokeEvent } from 'electron';
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
+
+/**
+ * The only preferences a renderer may write, with the value each one accepts.
+ * Add a key here only together with the Settings control that sets it.
+ */
+const PREFERENCE_CHECKS = {
+  theme: (value: unknown): boolean => isThemePreference(value),
+  gmailCSSEnabled: (value: unknown): boolean => typeof value === 'boolean',
+} as const;
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
-import { applyGmailCSS } from './gmail-css';
+import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './gmail-css';
 import { isThemePreference } from './theme-css';
 import { decideSender, type SenderPolicy } from './ipc-sender-policy';
 import { getSettingsWebContents } from './settings-window';
@@ -79,9 +88,7 @@ export const setupIPC = (window: BrowserWindow): void => {
     }
 
     try {
-      // eslint-disable-next-line global-require
-      const version = require('../../package.json').version;
-      return version;
+      return app.getVersion();
     } catch (error) {
       console.error('Failed to get version:', (error as Error).message);
       throw new Error('Failed to retrieve version');
@@ -152,7 +159,7 @@ export const setupIPC = (window: BrowserWindow): void => {
 
       // Update window title when account is removed
       if (mainWindow) {
-        mainWindow.setTitle('Mailshell - Gmail Client');
+        mainWindow.setTitle('MailShell - Gmail Client');
       }
     } catch (error) {
       console.error('Failed to remove account:', (error as Error).message);
@@ -200,9 +207,13 @@ export const setupIPC = (window: BrowserWindow): void => {
       throw new Error('Unauthorized IPC call');
     }
 
-    // Allowlist the theme before anything is loaded or saved
-    if (key === 'theme' && !isThemePreference(value)) {
-      throw new Error('Invalid theme preference');
+    // Allowlist keys and values before anything is loaded or saved. Only the
+    // preferences the Settings window sets can be written; anything else is refused.
+    // Own keys only: a name such as "toString" must not match an inherited method
+    const known = Object.prototype.hasOwnProperty.call(PREFERENCE_CHECKS, key);
+    const check = known ? PREFERENCE_CHECKS[key as keyof typeof PREFERENCE_CHECKS] : null;
+    if (!check || !check(value)) {
+      throw new Error('Unknown or invalid preference');
     }
 
     try {
@@ -213,6 +224,11 @@ export const setupIPC = (window: BrowserWindow): void => {
       // Apply the CSS presets change to the open Gmail page immediately
       if (key === 'gmailCSSEnabled' && mainWindow) {
         await applyGmailCSS(mainWindow.webContents, value === true);
+      }
+
+      // Gmail's dark theme follows the presets switch and the theme setting
+      if (key === 'gmailCSSEnabled' && mainWindow) {
+        await applyGmailDarkTheme(mainWindow.webContents, darkGmailWanted(prefs));
       }
 
       // Theme: drive nativeTheme. The window.ts 'updated' listener owns the
@@ -238,8 +254,8 @@ export const setupIPC = (window: BrowserWindow): void => {
 
     try {
       // Get the persistent session used for Gmail
-      const gshellSession = session.fromPartition('persist:gshell');
-      await gshellSession.clearCache();
+      const mailshellSession = session.fromPartition('persist:mailshell');
+      await mailshellSession.clearCache();
       return true;
     } catch (error) {
       console.error('Failed to clear cache:', (error as Error).message);

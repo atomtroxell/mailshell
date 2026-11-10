@@ -1,12 +1,18 @@
 // src/main/window.ts
 // BrowserWindow creation with persistent session partition for Gmail
 
-import { BrowserWindow, app, dialog, net, nativeTheme, shell } from 'electron'
+import { BrowserWindow, app, dialog, nativeImage, net, nativeTheme, shell } from 'electron'
 import path from 'path'
-import { applyGmailCSS } from './gmail-css'
+import fs from 'fs'
+import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './gmail-css'
+import { refreshAttachmentPanel, watchOpenThread } from './attachment-panel'
+import { isGmailAttachmentUrl, openAttachment } from './attachment-open'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
 import { darkAwareBackground, isThemePreference } from './theme-css'
+import { parseInboxUnread, renderBadgePng } from './unread-count'
+import { notifyNewMail } from './notify'
+import { createTray, isQuitting, setTrayUnread } from './tray'
 
 // Global reference to the main window
 let mainWindow: BrowserWindow | null = null
@@ -21,8 +27,39 @@ let lastDark: boolean | null = null
  * Get the preload script path.
  * Forge Vite outputs preload to .vite/build/shell.js
  */
-function getPreloadPath(): string {
-  return path.join(app.getAppPath(), '.vite/build/shell.js')
+/**
+ * Preload for a window. The Settings window gets the full settings bridge
+ * (shell.js). The main window gets only the error-page bridge (error.js),
+ * because Gmail runs in that window.
+ */
+function getPreloadPath(name: 'shell.js' | 'error.js' = 'shell.js'): string {
+  return path.join(app.getAppPath(), '.vite/build', name)
+}
+
+/**
+ * Show the unread count on the app's icon. Each OS has its own mechanism:
+ * Windows: a small overlay on the taskbar button (drawn in unread-count.ts)
+ * macOS: the number on the Dock icon
+ * Linux: the launcher count, which only some desktop environments show
+ */
+function setUnreadBadge(win: BrowserWindow, count: number): void {
+  const shown = Math.max(0, Math.floor(count))
+  try {
+    if (process.platform === 'win32') {
+      const png = renderBadgePng(shown)
+      if (png) {
+        win.setOverlayIcon(nativeImage.createFromBuffer(png), `${shown} unread`)
+      } else {
+        win.setOverlayIcon(null, '')
+      }
+    } else if (process.platform === 'darwin') {
+      app.dock?.setBadge(shown > 0 ? String(shown) : '')
+    } else {
+      app.setBadgeCount(shown)
+    }
+  } catch (error) {
+    console.error('Failed to update unread badge:', error)
+  }
 }
 
 /**
@@ -31,11 +68,11 @@ function getPreloadPath(): string {
  */
 function windowIconPath(): string {
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'assets/icons/icon.ico')
+    ? path.join(process.resourcesPath, 'icon.ico') // extraResource copies it to the resources root
     : path.join(app.getAppPath(), 'assets/icons/icon.ico')
 }
 
-// Hosts that stay inside Mailshell: Google sign-in and Gmail's own pop-outs
+// Hosts that stay inside MailShell: Google sign-in and Gmail's own pop-outs
 const IN_APP_HOSTS = ['mail.google.com', 'accounts.google.com', 'chat.google.com', 'meet.google.com']
 
 function isInAppUrl(url: string): boolean {
@@ -62,7 +99,7 @@ function openExternalIfWeb(url: string): void {
 /**
  * Create the main BrowserWindow with persistent session partition.
  *
- * The 'persist:gshell' partition enables automatic session storage
+ * The 'persist:mailshell' partition enables automatic session storage
  * (cookies, localStorage, cache) across app restarts. When the user
  * logs into Gmail once, the session persists until they explicitly
  * log out.
@@ -93,9 +130,9 @@ export async function createWindow(): Promise<BrowserWindow> {
     webPreferences: {
       // Persistent partition: CRITICAL for session persistence
       // Must start with 'persist:' for Electron to treat it as persistent
-      partition: 'persist:gshell',
-      // Preload script for secure IPC
-      preload: getPreloadPath(),
+      partition: 'persist:mailshell',
+      // Narrow preload: the error page's clear-cache call only (see error.ts)
+      preload: getPreloadPath('error.js'),
       // Security: Context isolation separates renderer and Node.js contexts
       contextIsolation: true,
       // Security: Disable node integration in renderer
@@ -106,23 +143,56 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   // Set initial window title with app branding
-  mainWindow.setTitle('Mailshell - Gmail Client')
+  mainWindow.setTitle('MailShell - Gmail Client')
 
   // Show window when content is ready (prevents visual flash)
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
   })
 
+  // Closing the window hides it to the tray, so the app keeps running for
+  // notifications. Quitting (tray menu, Exit, Cmd+Q) closes it for real.
+  mainWindow.on('close', (event) => {
+    if (isQuitting()) return
+    event.preventDefault()
+    mainWindow?.hide()
+  })
+
+  createTray(showMainWindow)
+
   const contents = mainWindow.webContents
 
   // Google sign-in and Gmail's own pop-outs stay in the app. Any other web
   // link opens in the user's default browser.
   contents.setWindowOpenHandler(({ url }) => {
+    // Attachment links never open as a window from here. attachment-open.ts
+    // checks the file type, then shows PDFs and images in its own locked
+    // viewer window and downloads everything else.
+    if (isGmailAttachmentUrl(url)) {
+      void openAttachment(contents, url)
+      return { action: 'deny' }
+    }
     if (url === 'about:blank' || isInAppUrl(url)) {
       return { action: 'allow', overrideBrowserWindowOptions: { icon: windowIconPath() } }
     }
     openExternalIfWeb(url)
     return { action: 'deny' }
+  })
+
+  // Save downloads straight to the Downloads folder (no save dialog), keeping
+  // the name and adding "(2)" etc. rather than overwriting an existing file
+  contents.session.on('will-download', (_event, item) => {
+    const dir = app.getPath('downloads')
+    const ext = path.extname(item.getFilename())
+    const base = path.basename(item.getFilename(), ext)
+    let target = path.join(dir, item.getFilename())
+    for (let n = 2; fs.existsSync(target); n++) {
+      target = path.join(dir, `${base} (${n})${ext}`)
+    }
+    item.setSavePath(target)
+    item.once('done', (_e, state) => {
+      console.info('Download finished:', state, path.basename(target))
+    })
   })
 
   // A link that would navigate the main window to another site opens in the browser
@@ -159,10 +229,49 @@ export async function createWindow(): Promise<BrowserWindow> {
       const prefs = await loadPreferences()
       // gmailCSSEnabled defaults to true if not set
       await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
+      await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
     } catch (error) {
       console.error('Failed to load preferences for CSS injection:', error)
     }
+    void refreshAttachmentPanel(contents)
   })
+
+  // Unread count: Gmail puts it in the page title. A title that says nothing
+  // about the inbox keeps the last count. Leaving Gmail (sign-in pages) clears
+  // the badge and forgets the count, so returning to Gmail does not notify again.
+  // null = count not known yet (first read after start, or after leaving Gmail).
+  let unreadCount: number | null = null
+  contents.on('page-title-updated', (_event, title) => {
+    const win = mainWindow
+    if (!win || win.isDestroyed()) return
+    const onGmail = contents.getURL().startsWith('https://mail.google.com')
+    if (!onGmail) {
+      if (unreadCount !== null) {
+        unreadCount = null
+        setUnreadBadge(win, 0)
+        setTrayUnread(0)
+      }
+      return
+    }
+    const next = parseInboxUnread(title)
+    if (next === null || next === unreadCount) return
+    const previous = unreadCount
+    unreadCount = next
+    setUnreadBadge(win, next)
+    setTrayUnread(next)
+    // New mail while the window is in the background: tell the user
+    if (previous !== null && next > previous && !win.isFocused()) {
+      void notifyNewMail(win, next - previous)
+    }
+  })
+
+  // Gmail changes threads by changing the URL hash, which is an in-page navigation
+  contents.on('did-navigate-in-page', () => {
+    void refreshAttachmentPanel(contents)
+  })
+
+  // Split view opens threads without changing the URL, so also watch the open thread
+  watchOpenThread(contents)
 
   // Follow theme changes (preference or OS) once, for whichever window is current
   if (!themeListenerRegistered) {
@@ -172,12 +281,16 @@ export async function createWindow(): Promise<BrowserWindow> {
       if (dark === lastDark) return
       lastDark = dark
       if (!mainWindow || mainWindow.isDestroyed()) return
-      mainWindow.setBackgroundColor(darkAwareBackground(dark))
+      const win = mainWindow
+      win.setBackgroundColor(darkAwareBackground(dark))
+      void loadPreferences().then((prefs) => applyGmailDarkTheme(win.webContents, darkGmailWanted(prefs)))
     })
   }
 
   // Load Gmail (rejection ignored: did-fail-load owns the UI)
-  mainWindow.loadURL('https://mail.google.com').catch(() => undefined)
+  // Go straight to Google sign-in. Signed-in users are sent on to Gmail;
+  // signed-out users sign in here instead of seeing the Gmail landing page.
+  mainWindow.loadURL('https://accounts.google.com/ServiceLogin?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F%23inbox').catch(() => undefined)
 
   // Handle window closed
   mainWindow.on('closed', () => {
@@ -221,6 +334,13 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   return mainWindow
+}
+
+/** Bring the main window back from the tray (or the background). */
+export function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.show()
+  mainWindow.focus()
 }
 
 /**

@@ -11,7 +11,7 @@ pnpm-lock.yaml
 
 # Build output
 dist/
-build/
+build/legal/
 .vite/
 out/
 
@@ -47,3 +47,8 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local-only (not for the public repository)
+
+.planning/
+.planning.zip

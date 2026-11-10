@@ -1,17 +1,35 @@
 // src/main/index.ts
 // Electron main process entry point
 
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import started from 'electron-squirrel-startup'
-import path from 'path'
-import { createWindow, getMainWindow } from './window'
+import { createWindow, getMainWindow, showMainWindow } from './window'
 import { setupIPC } from './ipc'
-import { validateOAuthConfig } from './auth/oauth-server'
 import { setupAppMenu } from './app-menu'
+import { markQuitting } from './tray'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
   app.quit()
+}
+
+// One MailShell at a time. A second launch (for example from the Start menu
+// while the app sits in the tray) brings the running window back instead.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+}
+app.on('second-instance', () => showMainWindow())
+
+// Let the window close for real when the app quits (see tray.ts)
+app.on('before-quit', () => markQuitting())
+
+// Windows toast notifications take their name and icon from the app's
+// AppUserModelID. Use the ID the Squirrel installer gives the Start Menu
+// shortcut (com.squirrel.mailshell.mailshell), so toasts say "MailShell" with its icon
+// in dev runs too. Without this, a dev run registers as electron.app.Electron.
+// Must run before any notification is shown.
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.mailshell.app') // matches the installer's shortcut (electron-builder appId)
 }
 
 // Security: Enforce ASAR integrity and disable renderer node integration
@@ -26,11 +44,6 @@ let mainWindow: BrowserWindow | null = null
 // Create window when app is ready
 app.on('ready', async () => {
   try {
-    // Validate OAuth config (logs warnings if missing, but doesn't block startup)
-    const oauthConfigValid = validateOAuthConfig()
-    if (!oauthConfigValid) {
-      console.log('App starting without OAuth credentials. Gmail login may be unavailable.')
-    }
 
     mainWindow = await createWindow()
     if (mainWindow) {
@@ -56,6 +69,8 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
+  } else {
+    showMainWindow()
   }
 })
 

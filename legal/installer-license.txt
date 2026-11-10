@@ -1,0 +1,27 @@
+MAILSHELL END-USER LICENSE AND TERMS
+
+Please read this before installing. Installing MailShell means you accept these terms.
+
+1. LICENSE
+MailShell is free software released under the MIT License. You may use, copy, change and share it, free of charge, provided the copyright and license notice are kept. The full license is in the LICENSE file in the installation folder.
+
+2. NO WARRANTY
+MailShell is provided "AS IS", without warranty of any kind, express or implied, including merchantability, fitness for a particular purpose, accuracy, availability and non-infringement.
+
+3. LIMITATION OF LIABILITY
+To the fullest extent permitted by law, the author and contributors are not liable for any loss or damage arising from MailShell or its use, including lost or delayed email, data loss, unauthorized access to your accounts, or account suspension. Do not rely on MailShell alone for urgent, legal, medical, financial or safety-related email.
+
+4. YOUR RESPONSIBILITIES
+You are responsible for your Google account, passwords, backups and how you use Gmail. You must follow Google's terms of service. MailShell is not affiliated with, endorsed by or sponsored by Google LLC. Gmail and Google are trademarks of Google LLC.
+
+5. PRIVACY
+MailShell does not collect personal information, and has no analytics, advertising or crash reporting. Your Gmail session and settings are stored only on your computer. The app connects only to Google services and to websites you open. Full policy: legal/privacy.html in the installation folder.
+
+6. DONATIONS
+Donations are optional and grant no rights, features, support or warranty.
+
+7. FULL TERMS
+The full Terms of Use are in legal/terms.html in the installation folder, and third-party notices are in legal/third-party.html. Those documents form part of this agreement.
+
+Contact: atomtroxell@gmail.com
+Source code: https://github.com/atomtroxell/mailshell

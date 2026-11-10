@@ -1,11 +1,17 @@
 // src/main/app-menu.ts
 // Application menu with Account management
 
-import { Menu, BrowserWindow } from 'electron'
+import { app, Menu, BrowserWindow, dialog, shell } from 'electron'
 import { showCredentialsDialog } from './credentials-dialog'
 import { createSettingsWindow } from './settings-window'
 import { createShortcutsWindow } from './shortcuts-window'
 import { acceleratorFor } from '../shared/shortcuts'
+import { DONATE_URL } from '../shared/links'
+import { openLegalPage } from './legal'
+
+const showLegalError = (): void => {
+  dialog.showErrorBox('MailShell', 'The legal pages could not be found. Reinstall MailShell to restore them.')
+}
 
 export function setupAppMenu(mainWindow: BrowserWindow): void {
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -15,8 +21,9 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
         {
           label: 'Exit',
           accelerator: acceleratorFor('exit'),
+          // Quit for real. Closing the window only hides it to the tray.
           click: () => {
-            mainWindow.close()
+            app.quit()
           },
         },
       ],
@@ -48,6 +55,17 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
     {
       label: 'View',
       submenu: [
+        {
+          label: 'Show or Hide Sidebar',
+          accelerator: acceleratorFor('toggleSidebar'),
+          // Gmail's own "Main menu" button opens and closes the sidebar
+          click: () => {
+            void mainWindow.webContents
+              .executeJavaScript(`document.querySelector('[aria-label="Main menu"]')?.click()`)
+              .catch(() => undefined)
+          },
+        },
+        { type: 'separator' },
         { role: 'reload', accelerator: acceleratorFor('reload') },
         { type: 'separator' },
         { role: 'resetZoom', accelerator: acceleratorFor('resetZoom') },
@@ -83,16 +101,48 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
         },
         { type: 'separator' },
         {
-          label: 'About Mailshell',
+          label: 'Privacy Policy',
+          click: async () => {
+            if (!(await openLegalPage('privacy.html'))) showLegalError()
+          },
+        },
+        {
+          label: 'Terms of Use',
+          click: async () => {
+            if (!(await openLegalPage('terms.html'))) showLegalError()
+          },
+        },
+        {
+          label: 'License and Notices',
+          click: async () => {
+            if (!(await openLegalPage('third-party.html'))) showLegalError()
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'About MailShell',
           click: () => {
-            // eslint-disable-next-line global-require
-            const { version } = require('../../package.json')
-            require('electron').dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              title: 'About Mailshell',
-              message: 'Mailshell',
-              detail: `Secure Gmail client v${version}\n\nA desktop wrapper for Gmail with credential management.`,
-            })
+            const version = app.getVersion()
+            const donate = DONATE_URL.startsWith('https://')
+            // Buttons: the optional donation link opens in the browser; the dialog has no other links
+            dialog
+              .showMessageBox(mainWindow, {
+                type: 'info',
+                title: 'About MailShell',
+                message: 'MailShell',
+                detail:
+                  `Version ${version}\n\n` +
+                  'A free desktop app for Gmail. MIT licensed.\n' +
+                  'Donations are optional and do not change your rights or the terms.\n' +
+                  'Not affiliated with Google LLC.',
+                buttons: donate ? ['OK', 'Buy Me a Coffee'] : ['OK'],
+                defaultId: 0,
+                cancelId: 0,
+              })
+              .then(({ response }) => {
+                if (donate && response === 1) void shell.openExternal(DONATE_URL)
+              })
+              .catch((error) => console.error('About dialog failed:', error))
           },
         },
       ],

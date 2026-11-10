@@ -1,28 +1,20 @@
 // src/preload/shell.ts
-// Preload script for secure context isolation
+// Preload for the Settings window only. The Settings page is a data: page, and
+// it gets just the calls it makes: preferences and the app version.
+//
+// Gmail never gets this bridge: the guard at the bottom exposes nothing unless
+// the page is a data: page. Logout, account and token calls are not exposed here.
+// The main process also checks every sender (validateSender in src/main/ipc.ts),
+// so this file is not the only line of defence.
 
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ElectronAPI } from '../shared/ipc-types';
 
-// Context isolation: This preload script runs in a privileged context
-// and can safely expose limited APIs to the renderer process via contextBridge.
-// NO raw ipcRenderer is exposed; only whitelisted safe methods.
-// The bridge is exposed only on data: pages (see the guard at the bottom); the
-// main process also re-checks every sender (validateSender in src/main/ipc.ts).
+type SettingsBridge = Pick<ElectronAPI, 'app' | 'preferences'>;
 
-// Define the secure API surface for the renderer
-const electronAPI: ElectronAPI = {
-  auth: {
-    getAccessToken: () => ipcRenderer.invoke('auth:getAccessToken'),
-    logout: () => ipcRenderer.invoke('auth:logout'),
-  },
+const settingsAPI: SettingsBridge = {
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
-  },
-  account: {
-    isSaved: () => ipcRenderer.invoke('account:isSaved'),
-    save: () => ipcRenderer.invoke('account:save'),
-    remove: () => ipcRenderer.invoke('account:remove'),
   },
   preferences: {
     get: () => ipcRenderer.invoke('preferences:get'),
@@ -31,11 +23,9 @@ const electronAPI: ElectronAPI = {
   },
 };
 
-// Only Mailshell's own data: pages (Settings window, error page) get the bridge.
-// Gmail and every other origin must never see it. Fail closed: any other
-// protocol (https:, about:, file:) gets nothing. Do not replace this with an
-// origin test: the origin of a data: document is the string 'null', and other
-// Google origins (e.g. accounts.google.com) also load in the main window.
+// Fail closed: any other protocol (https:, about:, file:) gets nothing. Do not
+// replace this with an origin test: the origin of a data: document is the
+// string 'null', and other Google origins load in the main window too.
 if (window.location.protocol === 'data:') {
-  contextBridge.exposeInMainWorld('electron', electronAPI);
+  contextBridge.exposeInMainWorld('electron', settingsAPI);
 }

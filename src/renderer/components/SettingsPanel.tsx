@@ -68,29 +68,6 @@ export const SettingsPanel: React.FC = () => {
     }
   };
 
-  const handleDataRetentionChange = async (
-    newRetention: '7days' | '30days' | '90days' | 'never'
-  ) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setSuccess(null);
-
-      await window.electron.preferences.set('dataRetention', newRetention);
-      setPreferences((prev) => (prev ? { ...prev, dataRetention: newRetention } : null));
-      setSuccess('Data retention updated');
-
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update data retention';
-      setError(message);
-      console.error('Failed to update data retention:', message);
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleConfirmClearCache = async () => {
     try {
       setIsLoading(true);
@@ -222,45 +199,6 @@ export const SettingsPanel: React.FC = () => {
 
         {preferences && (
           <>
-            <div style={{ marginBottom: '16px' }}>
-              <label
-                htmlFor="dataRetention"
-                style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#333',
-                }}
-              >
-                Data Retention
-              </label>
-              <select
-                id="dataRetention"
-                value={preferences.dataRetention}
-                onChange={(e) =>
-                  handleDataRetentionChange(e.target.value as Preferences['dataRetention'])
-                }
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  backgroundColor: 'white',
-                  color: '#333',
-                }}
-              >
-                <option value="7days">7 days</option>
-                <option value="30days">30 days</option>
-                <option value="90days">90 days</option>
-                <option value="never">Never delete</option>
-              </select>
-            </div>
-
             <div>
               <button
                 onClick={() => setShowConfirmClearCache(true)}
@@ -302,7 +240,7 @@ export const SettingsPanel: React.FC = () => {
           About
         </h2>
         <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '13px' }}>
-          Mailshell - Gmail Client
+          MailShell - Gmail Client
         </p>
         <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>Version {appVersion}</p>
       </section>
