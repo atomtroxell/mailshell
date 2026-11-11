@@ -1,0 +1,76 @@
+# Builds MailShell for Windows, macOS and Linux and attaches the files to a
+# GitHub release. Runs when a version tag (v*) is pushed, or by hand from the
+# Actions tab. The packages are unsigned and are not tested by the workflow.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run installer
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: out/installer/*.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run make -- --platform darwin --arch x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: out/make/zip/darwin/x64/*.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run package -- --platform linux --arch x64
+      - run: npx electron-builder --prepackaged out/MailShell-linux-x64 --config electron-builder.yml --linux AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: out/installer/*.AppImage
+
+  release:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release with the builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* \
+            --repo "${{ github.repository }}" \
+            --title "MailShell ${{ github.ref_name }} (early beta)" \
+            --notes "Early beta. Windows is the most tested platform. Mac and Linux builds are new and may not be stable. Report problems at https://github.com/${{ github.repository }}/issues" \
+            --prerelease

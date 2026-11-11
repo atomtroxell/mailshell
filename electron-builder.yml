@@ -24,3 +24,10 @@ nsis:
   installerHeaderIcon: assets/icons/icon.ico
   deleteAppDataOnUninstall: false
   artifactName: mailshell-${version}-Setup.${ext}
+
+linux:
+  icon: assets/icons/icon.png
+  category: Network
+  target:
+    - AppImage
+  artifactName: mailshell-${version}-${arch}.${ext}
