@@ -63,13 +63,16 @@ function setUnreadBadge(win: BrowserWindow, count: number): void {
 }
 
 /**
- * Window icon. In a packaged build the icon ships as an extraResource
- * (see forge.config.ts); in development it is read from the project folder.
+ * Window icon. Windows uses the .ico; Linux needs a PNG (macOS takes its icon
+ * from the app bundle, so the PNG is harmless there). In a packaged build the
+ * icons ship as extraResources (see forge.config.ts) and sit in the resources
+ * root; in development they are read from the project folder.
  */
 function windowIconPath(): string {
+  const file = process.platform === 'win32' ? 'icon.ico' : 'icon-256.png'
   return app.isPackaged
-    ? path.join(process.resourcesPath, 'icon.ico') // extraResource copies it to the resources root
-    : path.join(app.getAppPath(), 'assets/icons/icon.ico')
+    ? path.join(process.resourcesPath, file)
+    : path.join(app.getAppPath(), 'assets/icons', file)
 }
 
 // Hosts that stay inside MailShell: Google sign-in and Gmail's own pop-outs
