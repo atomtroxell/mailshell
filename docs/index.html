@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MailShell: a free desktop app for Gmail</title>
+  <meta name="description" content="MailShell is a free, open-source desktop app for Gmail on Windows. Gmail in its own window, with attachments at the top of each conversation, taskbar unread counts, and a cleaner list.">
+  <meta property="og:title" content="MailShell: a free desktop app for Gmail">
+  <meta property="og:description" content="Gmail in its own window, with a cleaner list, attachments at the top of each conversation, and a taskbar unread count. Free and open source.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --blue: #1C9CF5;
+      --blue-dark: #0147A1;
+      --accent: #FBD23E;
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --line: #e3e8ef;
+      --bg: #ffffff;
+      --soft: #f5f8fc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+    a { color: var(--blue-dark); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header.top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; }
+    .brand img { width: 32px; height: 32px; }
+    nav a { margin-left: 18px; color: var(--muted); text-decoration: none; font-size: 15px; }
+    nav a:hover { color: var(--ink); }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(160deg, var(--blue) 0%, var(--blue-dark) 100%);
+      color: #fff;
+      border-radius: 20px;
+      padding: 56px 40px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h1 { font-size: 40px; line-height: 1.15; margin: 0 0 14px; letter-spacing: -0.5px; }
+    .hero p.lead { font-size: 18px; margin: 0 0 26px; opacity: 0.95; }
+    .btn {
+      display: inline-block; padding: 14px 24px; border-radius: 10px;
+      font-weight: 600; font-size: 16px; text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #1f2937; }
+    .btn-primary:hover { filter: brightness(0.97); }
+    .btn-ghost { color: #fff; border: 1px solid rgba(255,255,255,0.6); margin-left: 10px; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+    .hero .small { font-size: 14px; opacity: 0.9; margin-top: 16px; }
+    .hero-art { display: flex; justify-content: center; }
+    .hero-art img { width: 200px; height: 200px; filter: drop-shadow(0 16px 30px rgba(0,0,0,0.25)); }
+
+    /* Sections */
+    section { padding: 64px 0 8px; }
+    section h2 { font-size: 28px; margin: 0 0 12px; letter-spacing: -0.3px; }
+    section > .wrap > p.intro { color: var(--muted); font-size: 17px; margin: 0 0 28px; max-width: 680px; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .card { background: var(--soft); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--accent)); display: inline-block; margin-bottom: 12px; }
+
+    /* Trust */
+    .trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .trust div { border-left: 3px solid var(--blue); padding: 4px 0 4px 16px; }
+    .trust strong { display: block; margin-bottom: 4px; }
+    .trust span { color: var(--muted); font-size: 15px; }
+
+    /* Download */
+    .download { text-align: center; }
+    .download .btn-primary { font-size: 17px; padding: 16px 28px; }
+    .download p { color: var(--muted); margin: 14px 0 0; font-size: 15px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--line); margin-top: 64px; padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+    footer .row { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: space-between; align-items: center; }
+    footer nav a { margin-left: 0; margin-right: 18px; }
+    footer p { margin: 14px 0 0; font-size: 13px; }
+
+    /* Phone */
+    @media (max-width: 760px) {
+      .hero { grid-template-columns: 1fr; padding: 40px 26px; text-align: left; }
+      .hero h1 { font-size: 32px; }
+      .hero-art img { width: 130px; height: 130px; }
+      .features, .trust { grid-template-columns: 1fr; }
+      nav a { margin-left: 12px; font-size: 14px; }
+    }
+    @media (max-width: 420px) {
+      .btn-ghost { margin-left: 0; margin-top: 10px; display: inline-block; }
+      nav a:not(:last-child) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#top" id="top"><img src="icon-256.png" alt="" width="32" height="32"> MailShell</a>
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/atomtroxell/mailshell">Source</a>
+      </nav>
+    </header>
+
+    <div class="hero">
+      <div>
+        <h1>Gmail in its own window. Free, and open source.</h1>
+        <p class="lead">MailShell is a desktop app for Gmail on Windows. It keeps Gmail in a window of its own, with the attachments and unread count you need at a glance.</p>
+        <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/latest/download/mailshell-0.1.0-beta.1-Setup.exe">Download for Windows</a>
+        <a class="btn btn-ghost" href="https://github.com/atomtroxell/mailshell">View the source</a>
+        <p class="small">Beta version 0.1.0. Windows 10 or 11. Free under the MIT License.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <img src="icon.svg" alt="">
+      </div>
+    </div>
+
+    <section id="features">
+      <div class="wrap" style="padding:0">
+        <h2>Built for reading mail</h2>
+        <p class="intro">MailShell does the parts of Gmail you use all day, and keeps out of the way for the rest.</p>
+        <div class="features">
+          <div class="card"><span class="dot"></span><h3>Attachments at the top</h3><p>Every file in the open conversation is listed above the messages. Click one to open it: PDFs and images open in your browser, and other files download to your Downloads folder.</p></div>
+          <div class="card"><span class="dot"></span><h3>Unread count on the taskbar</h3><p>The Windows taskbar shows how many unread messages you have, so you don't need to keep Gmail on screen.</p></div>
+          <div class="card"><span class="dot"></span><h3>New-mail notifications</h3><p>When mail arrives while MailShell is in the background, you get a notification with the sender and subject. Turn it off in Windows notification settings.</p></div>
+          <div class="card"><span class="dot"></span><h3>Lives in the tray</h3><p>Closing the window keeps MailShell running in the system tray, so notifications keep coming. Quit from the tray menu or with Exit.</p></div>
+          <div class="card"><span class="dot"></span><h3>Light, dark or system</h3><p>Pick a theme in Settings. Gmail follows the same choice, so light stays light even when Windows is dark.</p></div>
+          <div class="card"><span class="dot"></span><h3>A cleaner list</h3><p>Two-line rows with a compact sidebar, smaller icons, and a clear divider between the folders and your messages.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap" style="padding:0">
+        <h2>Private by design</h2>
+        <p class="intro">MailShell is a window onto Gmail. It has no accounts of its own, no analytics, and no ads.</p>
+        <div class="trust">
+          <div><strong>Your data stays on your computer</strong><span>Your sign-in is kept in the app's data folder. Signing out or clearing data removes it.</span></div>
+          <div><strong>No tracking</strong><span>MailShell sends nothing to its author. Gmail talks only to Google, as it does in a browser.</span></div>
+          <div><strong>Open source</strong><span>The full source is on GitHub under the MIT License. Read it, build it, or change it.</span></div>
+        </div>
+        <p style="margin-top:22px"><a href="privacy.html">Privacy policy</a> &middot; <a href="terms.html">Terms of use</a></p>
+      </div>
+    </section>
+
+    <section id="download" class="download">
+      <div class="wrap" style="padding:0">
+        <h2>Get MailShell</h2>
+        <p class="intro" style="margin:0 auto 24px">A Windows installer. Download it, run it, and sign in to Gmail.</p>
+        <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/latest/download/mailshell-0.1.0-beta.1-Setup.exe">Download for Windows</a>
+        <p>Looking for an older or newer build? <a href="https://github.com/atomtroxell/mailshell/releases">All releases</a></p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="row">
+        <div>
+          MailShell is free and MIT licensed. Donations are optional.
+          <br>MailShell is not affiliated with Google LLC. Gmail is a trademark of Google LLC.
+        </div>
+        <nav>
+          <a href="https://github.com/atomtroxell/mailshell">Source</a>
+          <a href="https://github.com/atomtroxell/mailshell/issues">Support</a>
+          <a href="https://buymeacoffee.com/atomtroxell">Buy me a coffee</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="third-party.html">Licenses</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
