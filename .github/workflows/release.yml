@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run installer
+      - run: npm run installer -- --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -50,7 +50,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run package -- --platform linux --arch x64
-      - run: npx electron-builder --prepackaged out/MailShell-linux-x64 --config electron-builder.yml --linux AppImage
+      - run: npx electron-builder --prepackaged out/MailShell-linux-x64 --config electron-builder.yml --linux AppImage --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: linux
