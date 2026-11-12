@@ -402,6 +402,28 @@ export function openCompose(composeUrl: string): boolean {
     void applyGmailLook(contents)
   })
 
+  // Close the window once Gmail leaves the compose screen: after Send, after
+  // Discard, or when the user moves on. The window must have shown compose
+  // first, so the sign-in page does not close it.
+  let sawCompose = false
+  const checkLeftCompose = () => {
+    if (win.isDestroyed()) return
+    let url: URL
+    try {
+      url = new URL(contents.getURL())
+    } catch {
+      return
+    }
+    if (url.hostname !== 'mail.google.com') return
+    if (url.searchParams.get('view') === 'cm') {
+      sawCompose = true
+    } else if (sawCompose) {
+      win.close()
+    }
+  }
+  contents.on('did-navigate', checkLeftCompose)
+  contents.on('did-navigate-in-page', checkLeftCompose)
+
   win.loadURL(composeUrl).catch(() => undefined)
   return true
 }
