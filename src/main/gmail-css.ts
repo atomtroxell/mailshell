@@ -753,10 +753,23 @@ img.yE,
 }
 `;
 
-/** Key from the last insertCSS call, needed to remove the presets later. */
-let activeCSSKey: string | null = null;
-/** Key for the dark theme's insertCSS call. */
-let activeDarkKey: string | null = null;
+/**
+ * insertCSS keys, one per Gmail window (keyed by webContents id), so the main
+ * window and a compose window can each be styled and restyled on their own.
+ */
+const presetKeys = new Map<number, string>();
+const darkKeys = new Map<number, string>();
+const tracked = new WeakSet<WebContents>();
+
+/** Forget a window's keys when the window goes away. */
+function trackWindow(contents: WebContents): void {
+  if (tracked.has(contents)) return;
+  tracked.add(contents);
+  contents.once('destroyed', () => {
+    presetKeys.delete(contents.id);
+    darkKeys.delete(contents.id);
+  });
+}
 
 /**
  * Apply or remove the Gmail CSS presets on the given page.
@@ -769,13 +782,15 @@ let activeDarkKey: string | null = null;
  */
 export async function applyGmailCSS(contents: WebContents, enabled: boolean): Promise<void> {
   try {
-    if (activeCSSKey) {
+    trackWindow(contents);
+    const old = presetKeys.get(contents.id);
+    if (old) {
       // Old key may already be gone after a navigation; ignore that failure.
-      await contents.removeInsertedCSS(activeCSSKey).catch(() => undefined);
-      activeCSSKey = null;
+      await contents.removeInsertedCSS(old).catch(() => undefined);
+      presetKeys.delete(contents.id);
     }
     if (enabled) {
-      activeCSSKey = await contents.insertCSS(GMAIL_CSS_PRESETS);
+      presetKeys.set(contents.id, await contents.insertCSS(GMAIL_CSS_PRESETS));
     }
   } catch (error) {
     console.error('Failed to apply Gmail CSS presets:', error);
@@ -792,12 +807,14 @@ export async function applyGmailCSS(contents: WebContents, enabled: boolean): Pr
  */
 export async function applyGmailDarkTheme(contents: WebContents, dark: boolean): Promise<void> {
   try {
-    if (activeDarkKey) {
-      await contents.removeInsertedCSS(activeDarkKey).catch(() => undefined);
-      activeDarkKey = null;
+    trackWindow(contents);
+    const old = darkKeys.get(contents.id);
+    if (old) {
+      await contents.removeInsertedCSS(old).catch(() => undefined);
+      darkKeys.delete(contents.id);
     }
     if (dark) {
-      activeDarkKey = await contents.insertCSS(GMAIL_DARK_CSS);
+      darkKeys.set(contents.id, await contents.insertCSS(GMAIL_DARK_CSS));
     }
   } catch (error) {
     console.error('Failed to apply Gmail dark theme:', error);

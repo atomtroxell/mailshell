@@ -1,7 +1,7 @@
 // src/main/window.ts
 // BrowserWindow creation with persistent session partition for Gmail
 
-import { BrowserWindow, app, dialog, nativeImage, net, nativeTheme, shell } from 'electron'
+import { BrowserWindow, app, dialog, nativeImage, net, nativeTheme, shell, type WebContents } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './gmail-css'
@@ -107,7 +107,7 @@ function openExternalIfWeb(url: string): void {
  * logs into Gmail once, the session persists until they explicitly
  * log out.
  */
-export async function createWindow(composeUrl: string | null = null): Promise<BrowserWindow> {
+export async function createWindow(): Promise<BrowserWindow> {
   // Apply the saved theme before any window exists so a Dark preference
   // does not flash white. Invalid stored values fall back to 'system'.
   const startupPrefs = await loadPreferences()
@@ -228,14 +228,7 @@ export async function createWindow(composeUrl: string | null = null): Promise<Br
   // reload or full navigation, and inserted CSS is dropped by navigation)
   contents.on('dom-ready', async () => {
     if (contents.getURL().startsWith('data:')) return
-    try {
-      const prefs = await loadPreferences()
-      // gmailCSSEnabled defaults to true if not set
-      await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
-      await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
-    } catch (error) {
-      console.error('Failed to load preferences for CSS injection:', error)
-    }
+    await applyGmailLook(contents)
     void refreshAttachmentPanel(contents)
   })
 
@@ -293,9 +286,7 @@ export async function createWindow(composeUrl: string | null = null): Promise<Br
   // Load Gmail (rejection ignored: did-fail-load owns the UI)
   // Go straight to Google sign-in. Signed-in users are sent on to Gmail;
   // signed-out users sign in here instead of seeing the Gmail landing page.
-  // A mail link that started the app opens its compose screen once signed in
-  const continueUrl = composeUrl ?? 'https://mail.google.com/mail/u/0/#inbox'
-  mainWindow.loadURL(`https://accounts.google.com/ServiceLogin?service=mail&continue=${encodeURIComponent(continueUrl)}`).catch(() => undefined)
+  mainWindow.loadURL('https://accounts.google.com/ServiceLogin?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F%23inbox').catch(() => undefined)
 
   // Handle window closed
   mainWindow.on('closed', () => {
@@ -341,15 +332,77 @@ export async function createWindow(composeUrl: string | null = null): Promise<Br
   return mainWindow
 }
 
+/** Apply MailShell's Gmail presets and theme to one Gmail window. */
+async function applyGmailLook(contents: WebContents): Promise<void> {
+  try {
+    const prefs = await loadPreferences()
+    // gmailCSSEnabled defaults to true if not set
+    await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
+    await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
+  } catch (error) {
+    console.error('Failed to load preferences for CSS injection:', error)
+  }
+}
+
+// Compose windows are kept here: Electron closes a window that nothing references
+const composeWindows = new Set<BrowserWindow>()
+
 /**
- * Open a Gmail compose screen (from a mailto: link) in the main window and bring
- * it forward. Returns false when there is no window to use.
+ * Open a Gmail compose screen (from a mailto: link) in its own window. Each link
+ * gets a new window, so a draft already open elsewhere is never replaced.
+ * Returns false when the app is not ready yet.
  */
 export function openCompose(composeUrl: string): boolean {
-  if (!mainWindow || mainWindow.isDestroyed()) return false
-  mainWindow.loadURL(composeUrl).catch(() => undefined)
-  mainWindow.show()
-  mainWindow.focus()
+  if (!app.isReady()) return false
+
+  const win = new BrowserWindow({
+    width: 900,
+    height: 760,
+    minWidth: 600,
+    minHeight: 480,
+    show: false,
+    autoHideMenuBar: true,
+    icon: windowIconPath(),
+    title: 'MailShell - Compose',
+    backgroundColor: darkAwareBackground(nativeTheme.shouldUseDarkColors),
+    webPreferences: {
+      // Same session as the main window, so the same Google sign-in applies.
+      // No preload: this window gets no bridge to the app.
+      partition: 'persist:mailshell',
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  composeWindows.add(win)
+  win.once('closed', () => composeWindows.delete(win))
+  win.once('ready-to-show', () => win.show())
+
+  const contents = win.webContents
+
+  // The same link rules as the main window
+  contents.setWindowOpenHandler(({ url }) => {
+    if (isGmailAttachmentUrl(url)) {
+      void openAttachment(contents, url)
+      return { action: 'deny' }
+    }
+    if (url === 'about:blank' || isInAppUrl(url)) {
+      return { action: 'allow', overrideBrowserWindowOptions: { icon: windowIconPath() } }
+    }
+    openExternalIfWeb(url)
+    return { action: 'deny' }
+  })
+  contents.on('will-navigate', (event, url) => {
+    if (isInAppUrl(url) || url.startsWith('data:')) return
+    event.preventDefault()
+    openExternalIfWeb(url)
+  })
+  contents.on('dom-ready', () => {
+    if (contents.getURL().startsWith('data:')) return
+    void applyGmailLook(contents)
+  })
+
+  win.loadURL(composeUrl).catch(() => undefined)
   return true
 }
 

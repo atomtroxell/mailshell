@@ -69,14 +69,12 @@ let mainWindow: BrowserWindow | null = null
 app.on('ready', async () => {
   try {
 
-    const launchCompose = pendingMailto ? composeUrlFromMailto(pendingMailto) : null
-    pendingMailto = null
-    mainWindow = await createWindow(launchCompose)
-    // A link that arrived while the window was starting
+    mainWindow = await createWindow()
+    // A mailto: link that arrived before the app was ready opens its own compose window
     if (pendingMailto) {
-      const late = pendingMailto
+      const early = pendingMailto
       pendingMailto = null
-      handleMailto(late)
+      handleMailto(early)
     }
     if (mainWindow) {
       setupIPC(mainWindow)
