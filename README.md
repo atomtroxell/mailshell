@@ -3,7 +3,7 @@
 A free, open-source desktop app for Gmail. It keeps Gmail in its own window, with the attachments and unread count you need at a glance.
 
 **Website:** https://atomtroxell.github.io/mailshell/
-**Download (Windows):** https://github.com/atomtroxell/mailshell/releases/latest
+**Download (Windows, Mac and Linux):** https://github.com/atomtroxell/mailshell/releases/latest
 
 ## Features
 
