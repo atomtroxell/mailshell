@@ -5,6 +5,14 @@ productName: MailShell
 copyright: Copyright 2026 AJ Troxell. Licensed under the MIT License.
 directories:
   output: out/installer
+# Lets MailShell open mailto: links. Windows (installer), macOS (app bundle) and
+# Linux (desktop file) each register it. The user still picks the default app in
+# their system settings.
+protocols:
+  - name: MailShell
+    schemes:
+      - mailto
+    role: Viewer
 win:
   icon: assets/icons/icon.ico
   target:

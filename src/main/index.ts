@@ -3,7 +3,8 @@
 
 import { app, BrowserWindow } from 'electron'
 import started from 'electron-squirrel-startup'
-import { createWindow, getMainWindow, showMainWindow } from './window'
+import { createWindow, getMainWindow, openCompose, showMainWindow } from './window'
+import { composeUrlFromMailto, findMailtoArg } from './mailto'
 import { setupIPC } from './ipc'
 import { setupAppMenu } from './app-menu'
 import { markQuitting } from './tray'
@@ -18,7 +19,30 @@ if (started) {
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
-app.on('second-instance', () => showMainWindow())
+// A mailto: link opens Gmail's compose screen. The link arrives on the command
+// line (Windows, Linux, and a second launch) or as an open-url event (macOS).
+// If the window is not ready yet, the link waits for it.
+let pendingMailto: string | null = findMailtoArg(process.argv)
+
+function handleMailto(url: string): void {
+  const compose = composeUrlFromMailto(url)
+  if (!compose) {
+    showMainWindow()
+    return
+  }
+  if (!openCompose(compose)) pendingMailto = url
+}
+
+app.on('second-instance', (_event, argv) => {
+  const mailto = findMailtoArg(argv)
+  if (mailto) handleMailto(mailto)
+  else showMainWindow()
+})
+
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  handleMailto(url)
+})
 
 // Let the window close for real when the app quits (see tray.ts)
 app.on('before-quit', () => markQuitting())
@@ -45,7 +69,15 @@ let mainWindow: BrowserWindow | null = null
 app.on('ready', async () => {
   try {
 
-    mainWindow = await createWindow()
+    const launchCompose = pendingMailto ? composeUrlFromMailto(pendingMailto) : null
+    pendingMailto = null
+    mainWindow = await createWindow(launchCompose)
+    // A link that arrived while the window was starting
+    if (pendingMailto) {
+      const late = pendingMailto
+      pendingMailto = null
+      handleMailto(late)
+    }
     if (mainWindow) {
       setupIPC(mainWindow)
       setupAppMenu(mainWindow)

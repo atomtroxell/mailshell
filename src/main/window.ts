@@ -107,7 +107,7 @@ function openExternalIfWeb(url: string): void {
  * logs into Gmail once, the session persists until they explicitly
  * log out.
  */
-export async function createWindow(): Promise<BrowserWindow> {
+export async function createWindow(composeUrl: string | null = null): Promise<BrowserWindow> {
   // Apply the saved theme before any window exists so a Dark preference
   // does not flash white. Invalid stored values fall back to 'system'.
   const startupPrefs = await loadPreferences()
@@ -293,7 +293,9 @@ export async function createWindow(): Promise<BrowserWindow> {
   // Load Gmail (rejection ignored: did-fail-load owns the UI)
   // Go straight to Google sign-in. Signed-in users are sent on to Gmail;
   // signed-out users sign in here instead of seeing the Gmail landing page.
-  mainWindow.loadURL('https://accounts.google.com/ServiceLogin?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F%23inbox').catch(() => undefined)
+  // A mail link that started the app opens its compose screen once signed in
+  const continueUrl = composeUrl ?? 'https://mail.google.com/mail/u/0/#inbox'
+  mainWindow.loadURL(`https://accounts.google.com/ServiceLogin?service=mail&continue=${encodeURIComponent(continueUrl)}`).catch(() => undefined)
 
   // Handle window closed
   mainWindow.on('closed', () => {
@@ -337,6 +339,18 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   return mainWindow
+}
+
+/**
+ * Open a Gmail compose screen (from a mailto: link) in the main window and bring
+ * it forward. Returns false when there is no window to use.
+ */
+export function openCompose(composeUrl: string): boolean {
+  if (!mainWindow || mainWindow.isDestroyed()) return false
+  mainWindow.loadURL(composeUrl).catch(() => undefined)
+  mainWindow.show()
+  mainWindow.focus()
+  return true
 }
 
 /** Bring the main window back from the tray (or the background). */
