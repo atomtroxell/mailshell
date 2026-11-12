@@ -14,6 +14,10 @@ if (started) {
   app.quit()
 }
 
+// The new-mail chime (src/main/sound.ts) plays from a hidden window with no user
+// gesture, so autoplay must be allowed for it
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
+
 // One MailShell at a time. A second launch (for example from the Start menu
 // while the app sits in the tray) brings the running window back instead.
 if (!app.requestSingleInstanceLock()) {

@@ -4,6 +4,7 @@
 // and subject; if the page cannot be read, the notification shows the count only.
 
 import { Notification, type BrowserWindow } from 'electron'
+import { playNewMailSound } from './sound'
 
 // Runs in the Gmail page. Reads the first unread row (the newest in the list)
 // and returns its sender name and subject as JSON, or null when there is none.
@@ -36,9 +37,11 @@ export async function notifyNewMail(win: BrowserWindow, added: number): Promise<
   }
 
   const others = added > 1 ? ` (and ${added - 1} more)` : ''
+  // Silent: the new-mail chime (src/main/sound.ts) plays instead of the Windows sound
   const note = new Notification({
     title: sender ? `New mail from ${sender}` : 'New mail',
     body: subject ? `${subject}${others}` : `${added} new message${added === 1 ? '' : 's'}`,
+    silent: true,
   })
   note.on('click', () => {
     if (win.isDestroyed()) return
@@ -46,4 +49,5 @@ export async function notifyNewMail(win: BrowserWindow, added: number): Promise<
     win.focus()
   })
   note.show()
+  playNewMailSound()
 }
