@@ -31,8 +31,6 @@ npm run package      # build the app into out/
 npm run installer    # build the Windows installer into out/installer/
 ```
 
-The legal pages are copied into `build/legal/` with the build date each time the app starts or packages (`scripts/stamp-legal.mjs`).
-
 ## Privacy and terms
 
 - [Privacy policy](https://atomtroxell.github.io/mailshell/privacy.html)
