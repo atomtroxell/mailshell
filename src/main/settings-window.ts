@@ -1,8 +1,9 @@
 import { BrowserWindow, app, type WebContents } from 'electron';
 import path from 'path';
 import { THEME_VARS } from './theme-css';
+import { provider } from './providers';
 
-const GMAIL_THEMES_URL = 'https://mail.google.com/mail/u/0/#settings/themes';
+const GMAIL_THEMES_URL = provider.themesUrl ?? '';
 
 let settingsWindow: BrowserWindow | null = null;
 
@@ -153,7 +154,7 @@ ${THEME_VARS}
     <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
     <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
     <p class="help-text">Applies to MailShell, Gmail and Windows dialogs. System follows your Windows setting.</p>
-    <a id="gmail-themes" class="btn-link" href="https://mail.google.com/mail/u/0/#settings/themes">Open Gmail themes</a>
+    <a id="gmail-themes" class="btn-link" href="${GMAIL_THEMES_URL}">Open Gmail themes</a>
   </section>
 
   <!-- Gmail Customization section -->
@@ -314,7 +315,7 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
   // main window. Everything else is blocked; no new windows.
   settingsWindow.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
-    if (url === GMAIL_THEMES_URL && !mainWindow.isDestroyed()) {
+    if (GMAIL_THEMES_URL && url === GMAIL_THEMES_URL && !mainWindow.isDestroyed()) {
       mainWindow.loadURL(GMAIL_THEMES_URL).catch(() => undefined);
       mainWindow.focus();
     }

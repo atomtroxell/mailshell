@@ -3,10 +3,11 @@
 
 import { BrowserWindow, dialog } from 'electron'
 import { clearRefreshToken } from './auth/token-store'
+import { provider } from './providers'
 
 export async function showCredentialsDialog(mainWindow: BrowserWindow): Promise<void> {
-  // Check if user has an active Gmail session by looking for auth cookies
-  const cookies = await mainWindow.webContents.session.cookies.get({ url: 'https://mail.google.com' })
+  // Check if user has an active mail session by looking for auth cookies
+  const cookies = await mainWindow.webContents.session.cookies.get({ url: provider.homeUrl })
   const hasSavedCredentials = cookies.length > 0
 
   if (!hasSavedCredentials) {
@@ -14,7 +15,7 @@ export async function showCredentialsDialog(mainWindow: BrowserWindow): Promise<
       type: 'info',
       title: 'No Saved Credentials',
       message: 'You are not logged in.',
-      detail: 'Log in to Gmail to save your account.',
+      detail: `Log in to ${provider.name} to save your account.`,
     })
     return
   }
@@ -23,8 +24,8 @@ export async function showCredentialsDialog(mainWindow: BrowserWindow): Promise<
   const result = await dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Manage Credentials',
-    message: 'Gmail Account Saved',
-    detail: 'Your Gmail credentials are securely stored on this device.',
+    message: `${provider.name} Account Saved`,
+    detail: `Your ${provider.name} credentials are securely stored on this device.`,
     buttons: ['Change Account', 'Remove Account', 'Close'],
     defaultId: 2, // Default to Close
   })
@@ -47,7 +48,7 @@ async function handleChangeAccount(mainWindow: BrowserWindow): Promise<void> {
     type: 'warning',
     title: 'Change Account',
     message: 'Log in with a different account?',
-    detail: 'Your current credentials will be removed, and you can log in with a different Gmail account.',
+    detail: `Your current credentials will be removed, and you can log in with a different ${provider.name} account.`,
     buttons: ['Change', 'Cancel'],
     defaultId: 1,
   })
@@ -65,13 +66,13 @@ async function handleChangeAccount(mainWindow: BrowserWindow): Promise<void> {
         })
       }
 
-      // Reload Gmail to show login screen
+      // Reload the mail page to show the login screen
       mainWindow.webContents.reload()
 
       await dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Account Changed',
-        message: 'Please log in with your new Gmail account.',
+        message: `Please log in with your new ${provider.name} account.`,
       })
     } catch (error) {
       await dialog.showMessageBox(mainWindow, {
@@ -98,7 +99,7 @@ async function handleRemoveAccount(mainWindow: BrowserWindow): Promise<void> {
       clearRefreshToken()
 
       // Update window title when account is removed
-      mainWindow.setTitle('MailShell - Gmail Client')
+      mainWindow.setTitle(`MailShell - ${provider.name} Client`)
 
       await dialog.showMessageBox(mainWindow, {
         type: 'info',

@@ -10,7 +10,7 @@ const PREFERENCE_CHECKS = {
   gmailCSSEnabled: (value: unknown): boolean => typeof value === 'boolean',
 } as const;
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
-import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './gmail-css';
+import { provider } from './providers';
 import { isThemePreference } from './theme-css';
 import { decideSender, type SenderPolicy } from './ipc-sender-policy';
 import { getSettingsWebContents } from './settings-window';
@@ -159,7 +159,7 @@ export const setupIPC = (window: BrowserWindow): void => {
 
       // Update window title when account is removed
       if (mainWindow) {
-        mainWindow.setTitle('MailShell - Gmail Client');
+        mainWindow.setTitle(`MailShell - ${provider.name} Client`);
       }
     } catch (error) {
       console.error('Failed to remove account:', (error as Error).message);
@@ -221,14 +221,10 @@ export const setupIPC = (window: BrowserWindow): void => {
       Object.assign(prefs, { [key]: value });
       await savePreferences(prefs);
 
-      // Apply the CSS presets change to the open Gmail page immediately
+      // Apply the presets switch to the open mail page immediately. The
+      // provider also sets the dark theme, which follows the presets switch.
       if (key === 'gmailCSSEnabled' && mainWindow) {
-        await applyGmailCSS(mainWindow.webContents, value === true);
-      }
-
-      // Gmail's dark theme follows the presets switch and the theme setting
-      if (key === 'gmailCSSEnabled' && mainWindow) {
-        await applyGmailDarkTheme(mainWindow.webContents, darkGmailWanted(prefs));
+        await provider.applyLook(mainWindow.webContents, prefs);
       }
 
       // Theme: drive nativeTheme. The window.ts 'updated' listener owns the

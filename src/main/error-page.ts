@@ -6,6 +6,7 @@
 import { BrowserWindow } from 'electron'
 import { escapeHtml } from '../shared/html'
 import { THEME_VARS } from './theme-css'
+import { provider } from './providers'
 
 export type ErrorKind = 'offline' | 'timeout' | 'cert' | 'crash' | 'unknown'
 
@@ -49,54 +50,58 @@ export function classifyLoadError(code: number, online: boolean): ErrorKind {
   }
 }
 
-const ERROR_COPY: Record<ErrorKind, { title: string; body: string; steps: readonly string[] }> = {
-  offline: {
-    title: "Can't reach Gmail",
-    body: "MailShell couldn't connect to Gmail.",
-    steps: [
-      'Check your internet connection.',
-      'If you use a VPN or proxy, check that it is connected.',
-      'MailShell will try again automatically when your connection comes back.',
-    ],
-  },
-  timeout: {
-    title: 'Gmail took too long to respond',
-    body: 'The connection to Gmail timed out.',
-    steps: ['Check your internet connection.', 'Try again in a moment.'],
-  },
-  cert: {
-    title: 'Secure connection failed',
-    body: "MailShell couldn't verify Gmail's security certificate.",
-    steps: [
-      "Check that your computer's date and time are correct.",
-      'Security software or network filtering can cause this. Try another network.',
-    ],
-  },
-  crash: {
-    title: 'Gmail stopped unexpectedly',
-    body: 'The Gmail view stopped working.',
-    steps: ['Try again. This usually fixes it.', 'If it keeps happening, use Clear cache and try again.'],
-  },
-  unknown: {
-    title: "Gmail didn't load",
-    body: 'Something went wrong while loading Gmail.',
-    steps: ['Try again.', 'If it keeps happening, use Clear cache and try again.'],
-  },
+/** The messages for each kind of error, worded for the current provider */
+function errorCopy(): Record<ErrorKind, { title: string; body: string; steps: readonly string[] }> {
+  const name = provider.name
+  return {
+    offline: {
+      title: `Can't reach ${name}`,
+      body: `MailShell couldn't connect to ${name}.`,
+      steps: [
+        'Check your internet connection.',
+        'If you use a VPN or proxy, check that it is connected.',
+        'MailShell will try again automatically when your connection comes back.',
+      ],
+    },
+    timeout: {
+      title: `${name} took too long to respond`,
+      body: `The connection to ${name} timed out.`,
+      steps: ['Check your internet connection.', 'Try again in a moment.'],
+    },
+    cert: {
+      title: 'Secure connection failed',
+      body: `MailShell couldn't verify the security certificate for ${name}.`,
+      steps: [
+        "Check that your computer's date and time are correct.",
+        'Security software or network filtering can cause this. Try another network.',
+      ],
+    },
+    crash: {
+      title: `${name} stopped unexpectedly`,
+      body: `The ${name} view stopped working.`,
+      steps: ['Try again. This usually fixes it.', 'If it keeps happening, use Clear cache and try again.'],
+    },
+    unknown: {
+      title: `${name} didn't load`,
+      body: `Something went wrong while loading ${name}.`,
+      steps: ['Try again.', 'If it keeps happening, use Clear cache and try again.'],
+    },
+  }
 }
 
 export function buildErrorHtml(kind: ErrorKind, reference: string): string {
-  const copy = ERROR_COPY[kind]
+  const copy = errorCopy()[kind]
   const steps = copy.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join('')
   const autoRetry =
     kind === 'offline'
-      ? `window.addEventListener('online', function () { location.href = 'https://mail.google.com' }, { once: true })`
+      ? `window.addEventListener('online', function () { location.href = '${provider.homeUrl}' }, { once: true })`
       : ''
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
-<title>MailShell - Gmail unavailable</title>
+<title>MailShell - ${provider.name} unavailable</title>
 <style>
 ${THEME_VARS}
   body { font-family: system-ui, sans-serif; background: var(--bg-alt); color: var(--fg-strong); margin: 0; display: flex; justify-content: center; padding: 64px 16px; }
@@ -113,7 +118,7 @@ ${THEME_VARS}
 <h1>${escapeHtml(copy.title)}</h1>
 <p>${escapeHtml(copy.body)}</p>
 <ul>${steps}</ul>
-<p><a id="retry" href="https://mail.google.com">Try again</a><button id="clear-cache">Clear cache and try again</button></p>
+<p><a id="retry" href="${provider.homeUrl}">Try again</a><button id="clear-cache">Clear cache and try again</button></p>
 <p id="cache-msg"></p>
 <p class="small">To open Settings, use Edit &gt; Preferences (Ctrl+Shift+P).</p>
 <p class="small">Error reference: ${escapeHtml(reference)}</p>
@@ -135,7 +140,7 @@ ${THEME_VARS}
         ok = false
       }
       if (ok === true) {
-        location.href = 'https://mail.google.com'
+        location.href = '${provider.homeUrl}'
       } else {
         msg.textContent = "Couldn't clear the cache from here. Use Edit > Preferences > Clear cache."
       }

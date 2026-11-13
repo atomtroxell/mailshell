@@ -4,7 +4,8 @@
 import { app, BrowserWindow } from 'electron'
 import started from 'electron-squirrel-startup'
 import { createWindow, getMainWindow, openCompose, showMainWindow } from './window'
-import { composeUrlFromMailto, findMailtoArg } from './mailto'
+import { findMailtoArg, parseMailto } from './mailto'
+import { provider } from './providers'
 import { setupIPC } from './ipc'
 import { setupAppMenu } from './app-menu'
 import { markQuitting } from './tray'
@@ -19,13 +20,14 @@ if (started) {
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
-// A mailto: link opens Gmail's compose screen. The link arrives on the command
+// A mailto: link opens the mail app's compose screen. The link arrives on the command
 // line (Windows, Linux, and a second launch) or as an open-url event (macOS).
 // If the window is not ready yet, the link waits for it.
 let pendingMailto: string | null = findMailtoArg(process.argv)
 
 function handleMailto(url: string): void {
-  const compose = composeUrlFromMailto(url)
+  const fields = parseMailto(url)
+  const compose = fields ? provider.composeUrl(fields) : null
   if (!compose) {
     showMainWindow()
     return

@@ -1,12 +1,8 @@
 // src/main/mailto.ts
-// Turns a mailto: link into a Gmail compose address. Pure functions, no Electron
-// imports, so they can be checked without starting the app.
-//
-// Gmail's compose screen takes these fields: to, cc, bcc, su (subject) and body.
-// Only the fixed Gmail compose address is ever built here; the link's values are
-// encoded as query parameters, so a link cannot change the host or path.
-
-const COMPOSE_BASE = 'https://mail.google.com/mail/?view=cm&fs=1'
+// Reads a mailto: link into compose fields (to, cc, bcc, subject, body). Pure
+// functions, no Electron imports, so they can be checked without starting the
+// app. Each provider turns the fields into its own compose address
+// (see providers/).
 
 // Longest link accepted. Mail links are short; this bounds the work done on
 // anything else.
@@ -97,18 +93,4 @@ export function parseMailto(url: string): ComposeFields | null {
   if (hasControlChars(fields.body, true)) return null
 
   return fields
-}
-
-/** Gmail compose URL for a mailto: link, or null when the link is not usable. */
-export function composeUrlFromMailto(url: string): string | null {
-  const fields = parseMailto(url)
-  if (!fields) return null
-  const params = new URLSearchParams()
-  if (fields.to.length) params.set('to', fields.to.join(','))
-  if (fields.cc.length) params.set('cc', fields.cc.join(','))
-  if (fields.bcc.length) params.set('bcc', fields.bcc.join(','))
-  if (fields.subject) params.set('su', fields.subject)
-  if (fields.body) params.set('body', fields.body)
-  const query = params.toString()
-  return query ? `${COMPOSE_BASE}&${query}` : COMPOSE_BASE
 }

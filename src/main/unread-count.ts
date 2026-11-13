@@ -4,20 +4,6 @@
 
 import { deflateSync } from 'zlib'
 
-/**
- * Read the inbox unread count from Gmail's page title. Gmail writes
- * "Inbox (3) - ..." when mail is unread and "Inbox - ..." when none is.
- * Returns null when the title says nothing about the inbox (for example while
- * another label is open), so the caller keeps the last known count.
- */
-export function parseInboxUnread(title: string): number | null {
-  const match = /^\s*Inbox\b(?:\s*\(([\d,]+)\+?\))?/i.exec(title)
-  if (!match) return null
-  if (!match[1]) return 0
-  const count = Number(match[1].replace(/,/g, ''))
-  return Number.isFinite(count) ? count : null
-}
-
 /** Text shown on the badge: the count, or "9+" above nine. Null when there is nothing to show. */
 export function badgeLabel(count: number): string | null {
   if (!Number.isFinite(count) || count <= 0) return null

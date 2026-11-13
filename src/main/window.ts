@@ -1,16 +1,15 @@
 // src/main/window.ts
-// BrowserWindow creation with persistent session partition for Gmail
+// BrowserWindow creation with persistent session partition for the mail app
 
 import { BrowserWindow, app, dialog, nativeImage, net, nativeTheme, shell, type WebContents } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './gmail-css'
-import { refreshAttachmentPanel, watchOpenThread } from './attachment-panel'
-import { isGmailAttachmentUrl, openAttachment } from './attachment-open'
+import { provider } from './providers'
+import { openAttachment } from './attachment-open'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
 import { darkAwareBackground, isThemePreference } from './theme-css'
-import { parseInboxUnread, renderBadgePng } from './unread-count'
+import { renderBadgePng } from './unread-count'
 import { notifyNewMail } from './notify'
 import { createTray, isQuitting, setTrayUnread } from './tray'
 
@@ -75,13 +74,11 @@ function windowIconPath(): string {
     : path.join(app.getAppPath(), 'assets/icons', file)
 }
 
-// Hosts that stay inside MailShell: Google sign-in and Gmail's own pop-outs
-const IN_APP_HOSTS = ['mail.google.com', 'accounts.google.com', 'chat.google.com', 'meet.google.com']
-
+// Hosts that stay inside MailShell: the provider's sign-in and its own pop-outs
 function isInAppUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname
-    return IN_APP_HOSTS.some((domain) => host === domain || host.endsWith('.' + domain))
+    return provider.inAppHosts.some((domain) => host === domain || host.endsWith('.' + domain))
   } catch {
     return false
   }
@@ -146,7 +143,7 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   // Set initial window title with app branding
-  mainWindow.setTitle('MailShell - Gmail Client')
+  mainWindow.setTitle(`MailShell - ${provider.name} Client`)
 
   // Show window when content is ready (prevents visual flash)
   mainWindow.once('ready-to-show', () => {
@@ -171,7 +168,7 @@ export async function createWindow(): Promise<BrowserWindow> {
     // Attachment links never open as a window from here. attachment-open.ts
     // checks the file type, then shows PDFs and images in its own locked
     // viewer window and downloads everything else.
-    if (isGmailAttachmentUrl(url)) {
+    if (provider.isAttachmentUrl(url)) {
       void openAttachment(contents, url)
       return { action: 'deny' }
     }
@@ -228,20 +225,20 @@ export async function createWindow(): Promise<BrowserWindow> {
   // reload or full navigation, and inserted CSS is dropped by navigation)
   contents.on('dom-ready', async () => {
     if (contents.getURL().startsWith('data:')) return
-    await applyGmailLook(contents)
-    void refreshAttachmentPanel(contents)
+    await applyPageLook(contents)
+    provider.onPageChange(contents)
   })
 
-  // Unread count: Gmail puts it in the page title. A title that says nothing
-  // about the inbox keeps the last count. Leaving Gmail (sign-in pages) clears
-  // the badge and forgets the count, so returning to Gmail does not notify again.
-  // null = count not known yet (first read after start, or after leaving Gmail).
+  // Unread count: the provider reads it from the page title. A title that says
+  // nothing about the inbox keeps the last count. Leaving the mail app (sign-in
+  // pages) clears the badge and forgets the count, so returning does not notify again.
+  // null = count not known yet (first read after start, or after leaving the mail app).
   let unreadCount: number | null = null
   contents.on('page-title-updated', (_event, title) => {
     const win = mainWindow
     if (!win || win.isDestroyed()) return
-    const onGmail = contents.getURL().startsWith('https://mail.google.com')
-    if (!onGmail) {
+    const onMail = provider.isMailPage(contents.getURL())
+    if (!onMail) {
       if (unreadCount !== null) {
         unreadCount = null
         setUnreadBadge(win, 0)
@@ -249,7 +246,7 @@ export async function createWindow(): Promise<BrowserWindow> {
       }
       return
     }
-    const next = parseInboxUnread(title)
+    const next = provider.parseUnread(title)
     if (next === null || next === unreadCount) return
     const previous = unreadCount
     unreadCount = next
@@ -261,13 +258,13 @@ export async function createWindow(): Promise<BrowserWindow> {
     }
   })
 
-  // Gmail changes threads by changing the URL hash, which is an in-page navigation
+  // The mail app may change threads with an in-page navigation (no full load)
   contents.on('did-navigate-in-page', () => {
-    void refreshAttachmentPanel(contents)
+    provider.onPageChange(contents)
   })
 
-  // Split view opens threads without changing the URL, so also watch the open thread
-  watchOpenThread(contents)
+  // Provider-specific watchers, such as following the open thread
+  provider.watchWindow(contents)
 
   // Follow theme changes (preference or OS) once, for whichever window is current
   if (!themeListenerRegistered) {
@@ -279,14 +276,13 @@ export async function createWindow(): Promise<BrowserWindow> {
       if (!mainWindow || mainWindow.isDestroyed()) return
       const win = mainWindow
       win.setBackgroundColor(darkAwareBackground(dark))
-      void loadPreferences().then((prefs) => applyGmailDarkTheme(win.webContents, darkGmailWanted(prefs)))
+      void loadPreferences().then((prefs) => provider.applyTheme(win.webContents, prefs))
     })
   }
 
-  // Load Gmail (rejection ignored: did-fail-load owns the UI)
-  // Go straight to Google sign-in. Signed-in users are sent on to Gmail;
-  // signed-out users sign in here instead of seeing the Gmail landing page.
-  mainWindow.loadURL('https://accounts.google.com/ServiceLogin?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F%23inbox').catch(() => undefined)
+  // Load the mail app (rejection ignored: did-fail-load owns the UI). The
+  // provider's start page goes straight to sign-in when signed out.
+  mainWindow.loadURL(provider.startUrl).catch(() => undefined)
 
   // Handle window closed
   mainWindow.on('closed', () => {
@@ -295,19 +291,19 @@ export async function createWindow(): Promise<BrowserWindow> {
 
   // Handle unresponsive renderer: ask the user instead of force-crashing
   contents.on('unresponsive', () => {
-    console.warn('Gmail became unresponsive')
+    console.warn(`${provider.name} became unresponsive`)
     if (unresponsiveDialogOpen || !mainWindow || mainWindow.isDestroyed()) return
     unresponsiveDialogOpen = true
     const win = mainWindow
     dialog
       .showMessageBox(win, {
         type: 'warning',
-        buttons: ['Wait', 'Reload Gmail'],
+        buttons: ['Wait', `Reload ${provider.name}`],
         defaultId: 0,
         cancelId: 0,
-        title: 'Gmail is not responding',
-        message: 'Gmail is not responding.',
-        detail: 'Wait for it to recover, or reload Gmail. Unsaved drafts in Gmail may be lost if you reload.',
+        title: `${provider.name} is not responding`,
+        message: `${provider.name} is not responding.`,
+        detail: `Wait for it to recover, or reload ${provider.name}. Unsaved drafts may be lost if you reload.`,
       })
       .then(({ response }) => {
         if (response === 1 && !win.isDestroyed()) win.webContents.reload()
@@ -319,7 +315,7 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   contents.on('responsive', () => {
-    console.info('Gmail is responsive again')
+    console.info(`${provider.name} is responsive again`)
   })
 
   // Handle crashed or killed renderer ('crashed' event no longer exists in Electron)
@@ -332,13 +328,11 @@ export async function createWindow(): Promise<BrowserWindow> {
   return mainWindow
 }
 
-/** Apply MailShell's Gmail presets and theme to one Gmail window. */
-async function applyGmailLook(contents: WebContents): Promise<void> {
+/** Apply the provider's presets and theme to one mail page. */
+async function applyPageLook(contents: WebContents): Promise<void> {
   try {
     const prefs = await loadPreferences()
-    // gmailCSSEnabled defaults to true if not set
-    await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
-    await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
+    await provider.applyLook(contents, prefs)
   } catch (error) {
     console.error('Failed to load preferences for CSS injection:', error)
   }
@@ -348,7 +342,7 @@ async function applyGmailLook(contents: WebContents): Promise<void> {
 const composeWindows = new Set<BrowserWindow>()
 
 /**
- * Open a Gmail compose screen (from a mailto: link) in its own window. Each link
+ * Open a compose screen (from a mailto: link) in its own window. Each link
  * gets a new window, so a draft already open elsewhere is never replaced.
  * Returns false when the app is not ready yet.
  */
@@ -382,7 +376,7 @@ export function openCompose(composeUrl: string): boolean {
 
   // The same link rules as the main window
   contents.setWindowOpenHandler(({ url }) => {
-    if (isGmailAttachmentUrl(url)) {
+    if (provider.isAttachmentUrl(url)) {
       void openAttachment(contents, url)
       return { action: 'deny' }
     }
@@ -399,7 +393,7 @@ export function openCompose(composeUrl: string): boolean {
   })
   contents.on('dom-ready', () => {
     if (contents.getURL().startsWith('data:')) return
-    void applyGmailLook(contents)
+    void applyPageLook(contents)
   })
 
   // Close the window once Gmail leaves the compose screen: after Send, after
@@ -408,14 +402,9 @@ export function openCompose(composeUrl: string): boolean {
   let sawCompose = false
   const checkLeftCompose = () => {
     if (win.isDestroyed()) return
-    let url: URL
-    try {
-      url = new URL(contents.getURL())
-    } catch {
-      return
-    }
-    if (url.hostname !== 'mail.google.com') return
-    if (url.searchParams.get('view') === 'cm') {
+    const current = contents.getURL()
+    if (!provider.isMailPage(current)) return
+    if (provider.isComposeScreen(current)) {
       sawCompose = true
     } else if (sawCompose) {
       win.close()

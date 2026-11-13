@@ -1,5 +1,6 @@
 // src/main/attachment-open.ts
-// Opens a Gmail attachment link from the attachment bar.
+// Opens an attachment link from the attachment bar. Which links count as
+// attachments is up to the provider (providers/).
 //
 // Google decides how a file is served. This module asks Google for the content
 // type first (headers only). PDFs and common images open in the user's default
@@ -12,6 +13,7 @@
 // and any file rendered in the app would run in the app's Google session.
 
 import { session, shell, type WebContents } from 'electron'
+import { provider } from './providers'
 
 const PARTITION = 'persist:mailshell'
 
@@ -25,16 +27,6 @@ const VIEWABLE_TYPES = new Set([
   'image/bmp',
 ])
 
-/** Gmail's attachment link on the mail page (view=att), as listed in a thread */
-export function isGmailAttachmentUrl(url: string): boolean {
-  try {
-    const u = new URL(url)
-    return u.protocol === 'https:' && u.hostname === 'mail.google.com' && u.searchParams.get('view') === 'att'
-  } catch {
-    return false
-  }
-}
-
 const withDisposition = (url: string, disp: 'inline' | 'attd'): string => {
   const u = new URL(url)
   u.searchParams.set('disp', disp)
@@ -46,7 +38,7 @@ const withDisposition = (url: string, disp: 'inline' | 'attd'): string => {
  * the file is not viewable.
  */
 export async function openAttachment(owner: WebContents, url: string): Promise<void> {
-  if (!isGmailAttachmentUrl(url)) return
+  if (!provider.isAttachmentUrl(url)) return
 
   const inlineUrl = withDisposition(url, 'inline')
   const downloadUrl = withDisposition(url, 'attd')

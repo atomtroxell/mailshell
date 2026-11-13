@@ -5,7 +5,7 @@
  */
 
 import { nativeTheme, type WebContents } from 'electron';
-import type { Preferences } from './preferences';
+import type { Preferences } from '../../preferences';
 
 /**
  * Whether Gmail should show its dark theme now. It follows the app's theme
