@@ -16,7 +16,7 @@ A free, open-source desktop app for Gmail. It keeps Gmail in its own window, wit
 
 ## Status
 
-Early beta, version 0.1.0-beta.1, so expect rough edges. The Windows installer is the most tested build. The Mac and Linux builds are new and may not be stable.
+Early beta, version 0.2.0-beta.1, so expect rough edges. The Windows installer is the most tested build. The Mac and Linux builds are new and may not be stable.
 
 Report problems or see known issues at https://github.com/atomtroxell/mailshell/issues.
 
