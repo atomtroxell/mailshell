@@ -8,6 +8,7 @@ import { getRefreshToken, clearRefreshToken } from './auth/token-store';
 const PREFERENCE_CHECKS = {
   theme: (value: unknown): boolean => isThemePreference(value),
   gmailCSSEnabled: (value: unknown): boolean => typeof value === 'boolean',
+  mailProvider: (value: unknown): boolean => value === 'gmail' || value === 'exchange',
 } as const;
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
 import { provider } from './providers';

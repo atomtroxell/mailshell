@@ -1,11 +1,12 @@
 // src/main/index.ts
 // Electron main process entry point
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import started from 'electron-squirrel-startup'
 import { createWindow, getMainWindow, openCompose, showMainWindow } from './window'
 import { findMailtoArg, parseMailto } from './mailto'
-import { provider } from './providers'
+import { provider, selectProvider } from './providers'
+import { loadPreferences, savePreferences } from './preferences'
 import { setupIPC } from './ipc'
 import { setupAppMenu } from './app-menu'
 import { markQuitting } from './tray'
@@ -67,9 +68,39 @@ if (!app.isPackaged) {
 // Main process initialization
 let mainWindow: BrowserWindow | null = null
 
+/**
+ * First-run question: which mail service. Returns null when the user skips it,
+ * in which case the question is asked again next time.
+ */
+async function askMailProvider(): Promise<'gmail' | 'exchange' | null> {
+  const { response } = await dialog.showMessageBox({
+    type: 'question',
+    title: 'MailShell',
+    message: 'Which mail do you use?',
+    detail:
+      'Gmail, or Exchange / Microsoft 365 (work and school accounts). You can change this later in Settings.',
+    buttons: ['Gmail', 'Exchange / Microsoft 365', 'Ask me later'],
+    defaultId: 0,
+    cancelId: 2,
+  })
+  return (['gmail', 'exchange', null] as const)[response] ?? null
+}
+
 // Create window when app is ready
 app.on('ready', async () => {
   try {
+
+    // Ask once which mail service to open, then remember the answer
+    let prefs = await loadPreferences()
+    // Asked again when there is no answer, or the saved answer is one that no longer exists
+    if (prefs.mailProvider !== 'gmail' && prefs.mailProvider !== 'exchange') {
+      const chosen = await askMailProvider()
+      if (chosen !== null) {
+        prefs = { ...prefs, mailProvider: chosen }
+        await savePreferences(prefs)
+      }
+    }
+    selectProvider(prefs.mailProvider)
 
     mainWindow = await createWindow()
     // A mailto: link that arrived before the app was ready opens its own compose window

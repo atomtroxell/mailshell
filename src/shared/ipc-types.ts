@@ -6,6 +6,7 @@
 export interface Preferences {
   theme: 'light' | 'dark' | 'system';
   gmailCSSEnabled: boolean;
+  mailProvider: 'gmail' | 'exchange' | null;
   version: string;
 }
 

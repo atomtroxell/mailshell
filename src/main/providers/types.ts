@@ -20,8 +20,20 @@ export interface MailProvider {
   readonly themesUrl?: string
   /** Hosts that stay inside MailShell: sign-in and the mail app's own windows */
   readonly inAppHosts: readonly string[]
+  /**
+   * True when sign-in can hand off to the organization's own sign-in host, which
+   * is not on inAppHosts. While the window is on a sign-in page, any https
+   * address then stays in the window until the mail app is reached.
+   */
+  readonly federatedSignIn?: boolean
   /** Script run in the mail page. Returns JSON {sender, subject} for the newest unread mail, or null. */
   readonly newestUnreadScript: string
+  /**
+   * Script run in the mail page that returns the inbox unread count as a number,
+   * or null when it can't tell. Used by providers whose title has no count. When
+   * absent, the count comes from the page title through parseUnread.
+   */
+  readonly unreadScript?: string
 
   /** True for the mail app itself (not a sign-in page) */
   isMailPage(url: string): boolean

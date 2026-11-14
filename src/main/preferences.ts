@@ -5,12 +5,15 @@ import * as path from 'path';
 export interface Preferences {
   theme: 'light' | 'dark' | 'system';
   gmailCSSEnabled: boolean;
+  /** Which mail service to open. null until the user has answered the first-run question. */
+  mailProvider: 'gmail' | 'exchange' | null;
   version: string;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   gmailCSSEnabled: true,
+  mailProvider: null,
   version: '0.1.0-beta.1',
 };
 

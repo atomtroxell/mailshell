@@ -21,6 +21,8 @@ let unresponsiveDialogOpen = false
 let themeListenerRegistered = false
 // Last effective dark state seen, so high-contrast/inverted changes are ignored
 let lastDark: boolean | null = null
+// How often a provider's unreadScript is run (providers without a count in the title)
+const UNREAD_POLL_MS = 5000
 
 /**
  * Get the preload script path.
@@ -82,6 +84,18 @@ function isInAppUrl(url: string): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * For providers with federated sign-in (Exchange): while the window is on a
+ * sign-in page, the organization's sign-in host is not on the fixed list, so any
+ * https address stays in the window until the mail app is reached.
+ */
+function isSignInFlow(contents: WebContents, target: string): boolean {
+  if (!provider.federatedSignIn) return false
+  const current = contents.getURL()
+  if (!current.startsWith('https://') || provider.isMailPage(current)) return false
+  return target.startsWith('https://')
 }
 
 /** Open a web link in the user's default browser. Other schemes are ignored. */
@@ -172,7 +186,7 @@ export async function createWindow(): Promise<BrowserWindow> {
       void openAttachment(contents, url)
       return { action: 'deny' }
     }
-    if (url === 'about:blank' || isInAppUrl(url)) {
+    if (url === 'about:blank' || isInAppUrl(url) || isSignInFlow(contents, url)) {
       return { action: 'allow', overrideBrowserWindowOptions: { icon: windowIconPath() } }
     }
     openExternalIfWeb(url)
@@ -197,7 +211,7 @@ export async function createWindow(): Promise<BrowserWindow> {
 
   // A link that would navigate the main window to another site opens in the browser
   contents.on('will-navigate', (event, url) => {
-    if (isInAppUrl(url) || url.startsWith('data:')) return
+    if (isInAppUrl(url) || url.startsWith('data:') || isSignInFlow(contents, url)) return
     event.preventDefault()
     openExternalIfWeb(url)
   })
@@ -229,34 +243,71 @@ export async function createWindow(): Promise<BrowserWindow> {
     provider.onPageChange(contents)
   })
 
-  // Unread count: the provider reads it from the page title. A title that says
-  // nothing about the inbox keeps the last count. Leaving the mail app (sign-in
-  // pages) clears the badge and forgets the count, so returning does not notify again.
+  // Unread count. The provider reads it from the page title (Gmail), or from its
+  // unreadScript on a timer when the title has no count (Outlook services). A
+  // null reading keeps the last count. Leaving the mail app (sign-in pages)
+  // clears the badge and forgets the count, so returning does not notify again.
   // null = count not known yet (first read after start, or after leaving the mail app).
   let unreadCount: number | null = null
-  contents.on('page-title-updated', (_event, title) => {
-    const win = mainWindow
-    if (!win || win.isDestroyed()) return
-    const onMail = provider.isMailPage(contents.getURL())
-    if (!onMail) {
-      if (unreadCount !== null) {
-        unreadCount = null
-        setUnreadBadge(win, 0)
-        setTrayUnread(0)
-      }
-      return
+  const leaveMail = (win: BrowserWindow): void => {
+    if (unreadCount !== null) {
+      unreadCount = null
+      setUnreadBadge(win, 0)
+      setTrayUnread(0)
     }
-    const next = provider.parseUnread(title)
-    if (next === null || next === unreadCount) return
+  }
+  const applyUnread = (win: BrowserWindow, next: number | null): void => {
+    if (next === null) return
     const previous = unreadCount
     unreadCount = next
+    // Set on every reading, not only on change: Windows can drop the taskbar overlay
     setUnreadBadge(win, next)
-    setTrayUnread(next)
+    if (next !== previous) setTrayUnread(next)
     // New mail while the window is in the background: tell the user
     if (previous !== null && next > previous && !win.isFocused()) {
       void notifyNewMail(win, next - previous)
     }
+  }
+  // Windows drops the taskbar badge when the window is hidden to the tray, so
+  // show the current count again whenever the window comes back
+  const reapplyBadge = (): void => {
+    if (mainWindow && !mainWindow.isDestroyed() && unreadCount !== null) setUnreadBadge(mainWindow, unreadCount)
+  }
+  mainWindow.on('show', () => {
+    reapplyBadge()
+    // The taskbar button can appear a moment after the window is shown
+    setTimeout(reapplyBadge, 300)
   })
+  mainWindow.on('restore', reapplyBadge)
+  contents.on('page-title-updated', (_event, title) => {
+    const win = mainWindow
+    if (!win || win.isDestroyed()) return
+    if (!provider.isMailPage(contents.getURL())) {
+      leaveMail(win)
+      return
+    }
+    applyUnread(win, provider.parseUnread(title))
+  })
+
+  // Providers without a count in the title read it from the page on a timer
+  const unreadScript = provider.unreadScript
+  if (unreadScript) {
+    const timer = setInterval(async () => {
+      const win = mainWindow
+      if (!win || win.isDestroyed() || contents.isDestroyed()) return
+      if (!provider.isMailPage(contents.getURL())) {
+        leaveMail(win)
+        return
+      }
+      try {
+        const raw: unknown = await contents.executeJavaScript(unreadScript)
+        applyUnread(win, typeof raw === 'number' && Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : null)
+      } catch {
+        // Page busy or navigating: keep the last count
+      }
+    }, UNREAD_POLL_MS)
+    contents.once('destroyed', () => clearInterval(timer))
+  }
 
   // The mail app may change threads with an in-page navigation (no full load)
   contents.on('did-navigate-in-page', () => {
@@ -380,14 +431,14 @@ export function openCompose(composeUrl: string): boolean {
       void openAttachment(contents, url)
       return { action: 'deny' }
     }
-    if (url === 'about:blank' || isInAppUrl(url)) {
+    if (url === 'about:blank' || isInAppUrl(url) || isSignInFlow(contents, url)) {
       return { action: 'allow', overrideBrowserWindowOptions: { icon: windowIconPath() } }
     }
     openExternalIfWeb(url)
     return { action: 'deny' }
   })
   contents.on('will-navigate', (event, url) => {
-    if (isInAppUrl(url) || url.startsWith('data:')) return
+    if (isInAppUrl(url) || url.startsWith('data:') || isSignInFlow(contents, url)) return
     event.preventDefault()
     openExternalIfWeb(url)
   })

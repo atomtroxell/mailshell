@@ -3,7 +3,6 @@ import path from 'path';
 import { THEME_VARS } from './theme-css';
 import { provider } from './providers';
 
-const GMAIL_THEMES_URL = provider.themesUrl ?? '';
 
 let settingsWindow: BrowserWindow | null = null;
 
@@ -12,7 +11,9 @@ function getPreloadPath(): string {
 }
 
 // Embedded settings HTML
-const SETTINGS_HTML = `<!DOCTYPE html>
+function settingsHtml(): string {
+  const isGmail = provider.id === 'gmail'
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -147,6 +148,14 @@ ${THEME_VARS}
   <div id="error" class="message error"></div>
   <div id="success" class="message success"></div>
 
+  <!-- Mail service section -->
+  <section>
+    <h2>Mail service</h2>
+    <label><input type="radio" name="mailProvider" value="gmail" id="mailGmail" /> Gmail</label>
+    <label><input type="radio" name="mailProvider" value="exchange" id="mailExchange" /> Exchange / Microsoft 365</label>
+    <p class="help-text">Restart MailShell after changing this.</p>
+  </section>
+
   <!-- Appearance section -->
   <section>
     <h2>Appearance</h2>
@@ -154,10 +163,12 @@ ${THEME_VARS}
     <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
     <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
     <p class="help-text">Applies to MailShell, Gmail and Windows dialogs. System follows your Windows setting.</p>
-    <a id="gmail-themes" class="btn-link" href="${GMAIL_THEMES_URL}">Open Gmail themes</a>
+    ${isGmail && provider.themesUrl ? `<a id="gmail-themes" class="btn-link" href="${provider.themesUrl}">Open Gmail themes</a>` : ''}
   </section>
 
-  <!-- Gmail Customization section -->
+  ${
+    isGmail
+      ? `<!-- Gmail Customization section -->
   <section>
     <h2>Gmail Customization</h2>
     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; margin: 0;">
@@ -165,7 +176,9 @@ ${THEME_VARS}
       <span>Enable Gmail UI presets</span>
     </label>
     <p class="help-text" style="margin-left: 32px;">Applies CSS improvements for cleaner, more readable Gmail interface</p>
-  </section>
+  </section>`
+      : ''
+  }
 
   <!-- Data Management section -->
   <section>
@@ -195,7 +208,10 @@ ${THEME_VARS}
     async function loadPreferences() {
       try {
         const prefs = await preferences.get();
-        document.getElementById('gmailCSSEnabled').checked = prefs.gmailCSSEnabled;
+        const gmailToggle = document.getElementById('gmailCSSEnabled');
+        if (gmailToggle) gmailToggle.checked = prefs.gmailCSSEnabled;
+        const service = document.querySelector('input[name="mailProvider"][value="' + prefs.mailProvider + '"]');
+        if (service) service.checked = true;
         const theme = ['light', 'dark', 'system'].includes(prefs.theme) ? prefs.theme : 'system';
         const themeRadio = document.querySelector('input[name="theme"][value="' + theme + '"]');
         if (themeRadio) themeRadio.checked = true;
@@ -216,7 +232,8 @@ ${THEME_VARS}
     }
 
     // Handle Gmail CSS toggle
-    document.getElementById('gmailCSSEnabled').addEventListener('change', async (e) => {
+    const gmailToggleInput = document.getElementById('gmailCSSEnabled');
+    if (gmailToggleInput) gmailToggleInput.addEventListener('change', async (e) => {
       try {
         await preferences.set('gmailCSSEnabled', e.target.checked);
         showSuccess(e.target.checked ? 'Gmail UI presets enabled' : 'Gmail UI presets disabled');
@@ -234,6 +251,20 @@ ${THEME_VARS}
           showSuccess(THEME_MESSAGES[e.target.value] || 'Theme updated');
         } catch (error) {
           showError('Failed to update theme');
+          loadPreferences();
+        }
+      });
+    });
+
+    // Handle mail service radios (takes effect after a restart)
+    const SERVICE_MESSAGES = { gmail: 'Restart MailShell to use Gmail', exchange: 'Restart MailShell to use Exchange / Microsoft 365' };
+    document.querySelectorAll('input[name="mailProvider"]').forEach((radio) => {
+      radio.addEventListener('change', async (e) => {
+        try {
+          await preferences.set('mailProvider', e.target.value);
+          showSuccess(SERVICE_MESSAGES[e.target.value] || 'Mail service updated');
+        } catch (error) {
+          showError('Failed to update mail service');
           loadPreferences();
         }
       });
@@ -281,7 +312,8 @@ ${THEME_VARS}
     loadVersion();
   </script>
 </body>
-</html>`;
+</html>`
+}
 
 /**
  * Create and manage settings dialog window
@@ -315,15 +347,16 @@ export const createSettingsWindow = async (mainWindow: BrowserWindow): Promise<v
   // main window. Everything else is blocked; no new windows.
   settingsWindow.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
-    if (GMAIL_THEMES_URL && url === GMAIL_THEMES_URL && !mainWindow.isDestroyed()) {
-      mainWindow.loadURL(GMAIL_THEMES_URL).catch(() => undefined);
+    const themesUrl = provider.themesUrl;
+    if (themesUrl && url === themesUrl && !mainWindow.isDestroyed()) {
+      mainWindow.loadURL(themesUrl).catch(() => undefined);
       mainWindow.focus();
     }
   });
   settingsWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
   // Load embedded HTML as data URL
-  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(SETTINGS_HTML)}`;
+  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(settingsHtml())}`;
 
   try {
     await settingsWindow.loadURL(dataUrl);
