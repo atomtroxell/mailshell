@@ -6,6 +6,7 @@
 
 import type { MailProvider } from '../types'
 import { createOutlookWebProvider } from '../outlook-web'
+import { NEWEST_UNREAD_JS, RIBBON_CSS, TIDY_PAGE_JS } from './page'
 
 // Finds the Inbox folder row and reads its unread count from the row's text.
 // Returns null when no Inbox row is on the page. The row text starts with icon
@@ -29,4 +30,7 @@ export const exchange: MailProvider = createOutlookWebProvider({
   name: 'Exchange',
   host: 'outlook.cloud.microsoft',
   unreadScript: UNREAD_JS,
+  newestUnreadScript: NEWEST_UNREAD_JS,
+  pageScript: TIDY_PAGE_JS,
+  css: RIBBON_CSS,
 });

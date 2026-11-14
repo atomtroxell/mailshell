@@ -157,14 +157,18 @@ ${THEME_VARS}
   </section>
 
   <!-- Appearance section -->
-  <section>
+  ${
+    isGmail
+      ? `<section>
     <h2>Appearance</h2>
     <label><input type="radio" name="theme" value="system" id="themeSystem" /> Use system setting</label>
     <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
     <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
     <p class="help-text">Applies to MailShell, Gmail and Windows dialogs. System follows your Windows setting.</p>
-    ${isGmail && provider.themesUrl ? `<a id="gmail-themes" class="btn-link" href="${provider.themesUrl}">Open Gmail themes</a>` : ''}
-  </section>
+    ${provider.themesUrl ? `<a id="gmail-themes" class="btn-link" href="${provider.themesUrl}">Open Gmail themes</a>` : ''}
+  </section>`
+      : ''
+  }
 
   ${
     isGmail
@@ -192,7 +196,7 @@ ${THEME_VARS}
   <!-- About section -->
   <section>
     <h2>About</h2>
-    <p class="help-text">MailShell - Gmail Client</p>
+    <p class="help-text">MailShell - ${provider.name} Client</p>
     <p class="version" id="version">Version <span></span></p>
   </section>
 
@@ -272,7 +276,7 @@ ${THEME_VARS}
 
     // Handle clear cache
     document.getElementById('clearCacheBtn').addEventListener('click', async () => {
-      if (!confirm('This will clear all cached data and browsing history. Your Gmail session will remain active.')) {
+      if (!confirm('This will clear all cached data and browsing history. Your sign-in will remain active.')) {
         return;
       }
 

@@ -8,6 +8,7 @@ import { createShortcutsWindow } from './shortcuts-window'
 import { acceleratorFor } from '../shared/shortcuts'
 import { DONATE_URL } from '../shared/links'
 import { openLegalPage } from './legal'
+import { provider } from './providers'
 
 const showLegalError = (): void => {
   dialog.showErrorBox('MailShell', 'The legal pages could not be found. Reinstall MailShell to restore them.')
@@ -132,9 +133,9 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
                 message: 'MailShell',
                 detail:
                   `Version ${version}\n\n` +
-                  'A free desktop app for Gmail. MIT licensed.\n' +
+                  `A free desktop app for ${provider.id === 'gmail' ? 'Gmail' : 'Exchange / Microsoft 365'}. MIT licensed.\n` +
                   'Donations are optional and do not change your rights or the terms.\n' +
-                  'Not affiliated with Google LLC.',
+                  (provider.id === 'gmail' ? 'Not affiliated with Google LLC.' : 'Not affiliated with Microsoft Corporation.'),
                 buttons: donate ? ['OK', 'Buy Me a Coffee'] : ['OK'],
                 defaultId: 0,
                 cancelId: 0,

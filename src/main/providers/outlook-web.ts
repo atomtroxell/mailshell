@@ -15,6 +15,12 @@ export interface OutlookWebConfig {
   host: string
   /** Page script for the inbox unread count (see MailProvider.unreadScript). Omit when not yet known. */
   unreadScript?: string
+  /** Page script for the newest unread message's sender and subject (see MailProvider.newestUnreadScript) */
+  newestUnreadScript?: string
+  /** Page code that tidies the page (hides promotions and folders). Runs on each page load. */
+  pageScript?: string
+  /** Style sheet for the page. Applied on each page load. */
+  css?: string
 }
 
 // Microsoft sign-in pages. They stay inside MailShell so sign-in can finish.
@@ -59,7 +65,7 @@ export function createOutlookWebProvider(config: OutlookWebConfig): MailProvider
     inAppHosts: [config.host, ...MICROSOFT_SIGNIN_HOSTS],
     // Work accounts sign in on their organization's own host
     federatedSignIn: true,
-    newestUnreadScript: COUNT_ONLY,
+    newestUnreadScript: config.newestUnreadScript ?? COUNT_ONLY,
     unreadScript: config.unreadScript,
 
     isMailPage(url) {
@@ -88,8 +94,13 @@ export function createOutlookWebProvider(config: OutlookWebConfig): MailProvider
     watchWindow: () => undefined,
     onPageChange: () => undefined,
 
-    // Outlook follows the system theme; MailShell adds no styling of its own
-    applyLook: async () => undefined,
+    // Tidy the page: the style sheet and the page code. Both are applied again on
+    // each page load, since a load drops inserted styles.
+    applyLook: async (contents) => {
+      if (config.css) await contents.insertCSS(config.css).catch(() => undefined)
+      if (config.pageScript) await contents.executeJavaScript(config.pageScript).catch(() => undefined)
+    },
+    // Outlook follows the system theme, so MailShell's theme does not change it
     applyTheme: async () => undefined,
   }
 }

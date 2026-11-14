@@ -5,6 +5,7 @@ import { BrowserWindow, app, dialog, nativeImage, net, nativeTheme, shell, type 
 import path from 'path'
 import fs from 'fs'
 import { provider } from './providers'
+import { chooseProvider, chooserUrl, parseChoice } from './first-run'
 import { openAttachment } from './attachment-open'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
@@ -118,7 +119,7 @@ function openExternalIfWeb(url: string): void {
  * logs into Gmail once, the session persists until they explicitly
  * log out.
  */
-export async function createWindow(): Promise<BrowserWindow> {
+export async function createWindow(options: { chooser?: boolean } = {}): Promise<BrowserWindow> {
   // Apply the saved theme before any window exists so a Dark preference
   // does not flash white. Invalid stored values fall back to 'system'.
   const startupPrefs = await loadPreferences()
@@ -157,7 +158,7 @@ export async function createWindow(): Promise<BrowserWindow> {
   })
 
   // Set initial window title with app branding
-  mainWindow.setTitle(`MailShell - ${provider.name} Client`)
+  mainWindow.setTitle(options.chooser ? 'MailShell' : `MailShell - ${provider.name} Client`)
 
   // Show window when content is ready (prevents visual flash)
   mainWindow.once('ready-to-show', () => {
@@ -209,8 +210,15 @@ export async function createWindow(): Promise<BrowserWindow> {
     })
   })
 
-  // A link that would navigate the main window to another site opens in the browser
+  // A link that would navigate the main window to another site opens in the browser.
+  // The first-run chooser's links are caught here and save the choice.
   contents.on('will-navigate', (event, url) => {
+    const choice = parseChoice(url)
+    if (choice) {
+      event.preventDefault()
+      void chooseProvider(choice)
+      return
+    }
     if (isInAppUrl(url) || url.startsWith('data:') || isSignInFlow(contents, url)) return
     event.preventDefault()
     openExternalIfWeb(url)
@@ -333,7 +341,7 @@ export async function createWindow(): Promise<BrowserWindow> {
 
   // Load the mail app (rejection ignored: did-fail-load owns the UI). The
   // provider's start page goes straight to sign-in when signed out.
-  mainWindow.loadURL(provider.startUrl).catch(() => undefined)
+  mainWindow.loadURL(options.chooser ? chooserUrl() : provider.startUrl).catch(() => undefined)
 
   // Handle window closed
   mainWindow.on('closed', () => {

@@ -21,7 +21,7 @@ export const SHORTCUTS = [
   { id: 'paste', accelerator: 'CmdOrCtrl+V', label: 'Paste', group: 'Edit' },
   { id: 'selectAll', accelerator: 'CmdOrCtrl+A', label: 'Select All', group: 'Edit' },
   { id: 'toggleSidebar', accelerator: 'CmdOrCtrl+Shift+B', label: 'Show or Hide Sidebar', group: 'View' },
-  { id: 'reload', accelerator: 'CmdOrCtrl+R', label: 'Reload Gmail', group: 'View' },
+  { id: 'reload', accelerator: 'CmdOrCtrl+R', label: 'Reload', group: 'View' },
   { id: 'resetZoom', accelerator: 'CmdOrCtrl+0', label: 'Actual Size', group: 'View' },
   { id: 'zoomIn', accelerator: 'CmdOrCtrl+=', label: 'Zoom In', group: 'View' },
   { id: 'zoomOut', accelerator: 'CmdOrCtrl+-', label: 'Zoom Out', group: 'View' },
