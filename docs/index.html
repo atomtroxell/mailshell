@@ -4,16 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MailShell – Free Desktop App for Gmail and Exchange (Microsoft 365)</title>
-  <meta name="description" content="MailShell is a free, open-source desktop app for Gmail and Exchange / Microsoft 365 work accounts. Unread counts on your taskbar or Dock, desktop notifications, a Gmail attachment bar, and a cleaner layout. Windows, Mac and Linux.">
+  <meta name="description" content="MailShell is a free, open-source desktop app for Gmail and Exchange / Microsoft 365. A cleaner layout, a Gmail attachment bar, email links that open a new message and nothing to import. Windows, Mac and Linux.">
   <link rel="canonical" href="https://atomtroxell.github.io/mailshell/">
   <meta name="theme-color" content="#0147A1">
+  <meta name="google-site-verification" content="H5ETQnGh495jxCLcu4XvwAVnSZwAerblb6UvKApKEMQ">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="MailShell">
   <meta property="og:url" content="https://atomtroxell.github.io/mailshell/">
   <meta property="og:title" content="MailShell – a free desktop app for Gmail and Exchange">
-  <meta property="og:description" content="Gmail or Exchange / Microsoft 365 in a window of its own, on Windows, Mac and Linux. Unread counts, notifications, and a calmer layout. Free and open source.">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:description" content="Gmail or Exchange / Microsoft 365 in a window of its own, with a cleaner layout and nothing to set up. Free and open source for Windows, Mac and Linux.">
+  <meta property="og:image" content="https://atomtroxell.github.io/mailshell/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="MailShell: Gmail and Exchange in a desktop app of their own">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://atomtroxell.github.io/mailshell/og-image.png">
 
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="icon" href="icon-256.png" type="image/png" sizes="256x256">
@@ -44,32 +50,17 @@
       {
         "@type": "Question",
         "name": "Is MailShell really free?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is free and open source under the MIT License, with no ads, no paid tier and no trial. Donations are optional." }
-      },
-      {
-        "@type": "Question",
-        "name": "Does MailShell read or store my email?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. MailShell shows your mail service's own web page in its own window. Your messages stay with Google or Microsoft, and MailShell sends nothing to its author." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. It's free and open source under the MIT License, with no ads, no paid tier and no trial. If you'd like to support it, you can buy me a coffee, but it's entirely optional." }
       },
       {
         "@type": "Question",
         "name": "Which accounts work?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Gmail accounts, and Exchange work or school accounts (Microsoft 365). Personal Microsoft accounts (Outlook.com, Hotmail) are not supported yet. They are on the roadmap, along with Infomaniak and other mail services." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Gmail, including Google Workspace accounts, and Exchange work or school accounts on Microsoft 365. Personal Outlook.com and Hotmail accounts aren't supported yet." }
       },
       {
         "@type": "Question",
-        "name": "How is this different from a browser tab?",
-        "acceptedAnswer": { "@type": "Answer", "text": "MailShell gets its own taskbar or Dock icon with an unread count, sends sender notifications, keeps running in the tray when you close it, and tidies up the interface." }
-      },
-      {
-        "@type": "Question",
-        "name": "Why does my Mac say it can't open MailShell?",
-        "acceptedAnswer": { "@type": "Answer", "text": "The Mac build isn't signed with an Apple certificate yet. Open it once, then go to System Settings, Privacy & Security and click Open Anyway." }
-      },
-      {
-        "@type": "Question",
-        "name": "How do I switch between Gmail and Exchange?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Open Settings, choose Mail service, pick the other one, and restart MailShell." }
+        "name": "Can I use more than one account?",
+        "acceptedAnswer": { "@type": "Answer", "text": "One at a time for now. You can switch between Gmail and Exchange in Settings under Mail service, and MailShell restarts with the new one. Multiple accounts in tabs is next on the list." }
       }
     ]
   }
@@ -105,8 +96,13 @@
     }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; }
     .brand img { width: 32px; height: 32px; }
-    nav a { margin-left: 18px; color: var(--muted); text-decoration: none; font-size: 15px; }
+    nav a { margin-left: 18px; color: var(--muted); text-decoration: none; font-size: 15px; display: inline-flex; align-items: center; min-height: 24px; }
     nav a:hover { color: var(--ink); }
+    nav a.coffee { color: var(--ink); background: #fff6d6; border: 1px solid var(--accent); padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+    nav a.coffee:hover { background: var(--accent); }
+    .tip { max-width: 560px; margin: 36px auto 0; padding: 18px 22px; background: #fffaeb; border: 1px solid #f6e3a1; border-radius: 14px; text-align: center; }
+    .download .tip p { margin: 0; color: var(--ink); }
+    .tip a { font-weight: 600; white-space: nowrap; }
 
     /* Hero */
     .hero {
@@ -167,6 +163,10 @@
     .download { text-align: center; }
     .download .btn-primary { font-size: 17px; padding: 16px 28px; }
     .download p { color: var(--muted); margin: 14px 0 0; font-size: 15px; }
+    .download .platforms { text-align: left; }
+    .platforms .card { display: flex; flex-direction: column; }
+    .platforms .card p { margin: 0 0 18px; flex: 1; }
+    .platforms .btn-primary { font-size: 15px; padding: 12px 18px; text-align: center; }
 
     /* Footer */
     footer { border-top: 1px solid var(--line); margin-top: 64px; padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
@@ -178,6 +178,7 @@
     @media (max-width: 760px) {
       .hero { grid-template-columns: 1fr; padding: 40px 26px; text-align: left; }
       .hero h1 { font-size: 32px; }
+      .hero-art { order: -1; margin-bottom: 12px; }
       .hero-art img { width: 130px; height: 130px; }
       .features, .trust { grid-template-columns: 1fr; }
       nav a { margin-left: 12px; font-size: 14px; }
@@ -193,80 +194,75 @@
   <div class="wrap">
     <header class="top">
       <a class="brand" href="#top" id="top"><img src="icon-256.png" alt="" width="32" height="32"> MailShell</a>
-      <nav>
+      <nav aria-label="Main">
         <a href="#features">Features</a>
         <a href="#faq">FAQ</a>
         <a href="#download">Download</a>
         <a href="https://github.com/atomtroxell/mailshell">GitHub</a>
+        <a class="coffee" href="https://buymeacoffee.com/atomtroxell">&#9749; Buy me a coffee</a>
       </nav>
     </header>
 
     <main id="main" tabindex="-1">
     <div class="hero">
       <div>
-        <h1>Gmail and Exchange, in a desktop app of their own.</h1>
-        <p class="lead">MailShell puts Gmail or Exchange / Microsoft 365 in its own window on Windows, Mac and Linux, with unread counts on your taskbar, notifications from real senders, and a calmer layout. No browser tab to lose.</p>
+        <h1>Your email, in a window of its own.</h1>
+        <p class="lead">MailShell gives Gmail and Exchange / Microsoft 365 a proper home outside your browser, on Windows, Mac and Linux. Same account, same mail, nothing to set up or import. Just a cleaner layout, a window you can't lose among your tabs and email links that finally open somewhere useful.</p>
         <a class="btn btn-primary" href="#download">Download MailShell</a>
         <a class="btn btn-ghost" href="https://github.com/atomtroxell/mailshell">View on GitHub</a>
-        <p class="small">Free and open source (MIT). Early beta, version 0.2.0-beta.1. Windows 10 and 11, macOS, Linux.</p>
+        <p class="small">Free and open source (MIT) &middot; Early beta, version 0.2.0-beta.1</p>
       </div>
       <div class="hero-art" aria-hidden="true">
         <img src="icon.svg" alt="">
       </div>
     </div>
 
+    <section id="why">
+      <div class="wrap" style="padding:0">
+        <h2>Why not just keep a tab open?</h2>
+        <p class="intro">Gmail has never had a desktop app, and a lot of Microsoft 365 work and school plans only include mail on the web. So your inbox ends up as one tab among twenty, easy to lose and easy to close by accident.</p>
+        <p class="intro">Full mail programs fix that, but they bring their own setup, their own sync and a pile of features you didn't ask for. MailShell keeps it simple. It opens your real web mail in its own window and adds the desktop parts a tab can't do.</p>
+      </div>
+    </section>
+
     <section id="features">
       <div class="wrap" style="padding:0">
-        <h2>Everything you need from your mail, nothing you don't</h2>
-        <p class="intro">MailShell handles the parts of email you use all day, then gets out of the way.</p>
+        <h2>What you get</h2>
         <div class="features">
-          <div class="card"><span class="dot"></span><h3>Unread count on your taskbar</h3><p>See how many messages are waiting without switching windows. The count shows on the MailShell icon in the Windows taskbar, the Mac Dock, and Linux launchers that support badges.</p></div>
-          <div class="card"><span class="dot"></span><h3>Notifications that tell you who wrote</h3><p>When mail arrives while you're in another app, a notification shows the sender and subject. Click it to jump straight to MailShell. Turn these off any time in your system's notification settings.</p></div>
-          <div class="card"><span class="dot"></span><span class="tag">Gmail only</span><h3>Every attachment in one place</h3><p>MailShell lists every file in a conversation in a bar above the messages, so you never scroll through a long thread to find one. PDFs and images open in your browser; other files save to your Downloads folder.</p></div>
-          <div class="card"><span class="dot"></span><h3>Keeps running in the background</h3><p>Close the window and MailShell stays in the system tray (the menu bar on Mac), so you still get new mail. Choose Quit MailShell from the tray menu to close it fully.</p></div>
-          <div class="card"><span class="dot"></span><h3>Light, dark or match your system</h3><p>Pick a theme in Settings, and your mail follows it too, even if your computer is set differently. Your inbox matches the theme when Gmail UI presets is on, which is the default.</p></div>
-          <div class="card"><span class="dot"></span><h3>A cleaner, tighter inbox</h3><p>In Gmail: a slimmer header and sidebar, two-line message rows, and no Upgrade, Support or Studio buttons. In Exchange: no Groups folder, no Microsoft promotions, and a smaller ribbon. Prefer the original look? Turn off Gmail UI presets in Settings.</p></div>
+          <div class="card"><span class="dot"></span><h3>A tidier inbox</h3><p>Gmail gets a shorter header, two-line message rows, labels as small color dots and no Upgrade, Support or Studio buttons. You can switch that off in Settings if you prefer the original. In Exchange, the Groups folder and Microsoft's promotions are hidden and the ribbon is a little smaller.</p></div>
+          <div class="card"><span class="dot"></span><span class="tag">Gmail only</span><h3>Every attachment in one place</h3><p>Open a conversation and every file in it shows up in a bar above the messages. No more scrolling a long thread hunting for one PDF. PDFs and images open in your browser, and everything else saves straight to your Downloads folder.</p></div>
+          <div class="card"><span class="dot"></span><h3>Email links open in MailShell</h3><p>Make MailShell your default email app, and clicking an email address on a website opens a new message in its own window, already addressed. Hit Send and the window closes itself.</p></div>
+          <div class="card"><span class="dot"></span><h3>Nothing to set up</h3><p>Pick Gmail or Exchange the first time it opens and sign in the way you would in a browser, including through your company's sign-in page. Your labels, folders, filters and settings are already there. There's nothing to import or sync.</p></div>
+          <div class="card"><span class="dot"></span><span class="tag">Gmail only</span><h3>Light or dark, your choice</h3><p>Pick light, dark or your system setting, and Gmail switches to match. Message bodies stay light, so emails still look the way they were sent. Exchange follows your system setting on its own.</p></div>
+          <div class="card"><span class="dot"></span><h3>Behaves like a real app</h3><p>It gets its own icon on the taskbar or Dock, with an unread count. Close the window and it keeps running in the system tray (the menu bar on a Mac), so new mail still comes in.</p></div>
         </div>
       </div>
     </section>
 
     <section>
       <div class="wrap" style="padding:0">
-        <h2>Private by design</h2>
-        <p class="intro">MailShell is a window onto your mail and nothing more. It has no accounts, no analytics, no ads and no servers of its own.</p>
+        <h2>Your mail stays yours</h2>
+        <p class="intro">MailShell has no accounts, no analytics, no ads and no servers of its own.</p>
         <div class="trust">
-          <div><strong>Stays on your computer</strong><span>Your sign-in and settings are stored in MailShell's app data folder on your own machine. There is no MailShell server for your mail to pass through.</span></div>
-          <div><strong>No tracking</strong><span>MailShell never contacts its author. It talks only to Google or Microsoft, exactly as your browser would.</span></div>
-          <div><strong>Open source</strong><span>Every line is on GitHub under the MIT License. Read it, build it yourself, or change it.</span></div>
+          <div><strong>Stays on your computer</strong><span>Your sign-in and settings are saved in MailShell's app data folder on your own machine. There's no MailShell server for your mail to pass through.</span></div>
+          <div><strong>No tracking</strong><span>It doesn't phone home. It only talks to Google or Microsoft (and your company's sign-in page, if you have one), the same way your browser does.</span></div>
+          <div><strong>Open source</strong><span>Every line is on GitHub under the MIT License. Read it, build it yourself or change it.</span></div>
         </div>
         <p style="margin-top:22px"><a href="privacy.html">Read the privacy policy</a> &middot; <a href="terms.html">Terms of use</a></p>
       </div>
     </section>
 
-    <section id="platforms">
+    <section id="download" class="download">
       <div class="wrap" style="padding:0">
-        <h2>Works on Windows, Mac and Linux</h2>
-        <p class="intro">MailShell is an early beta, so expect a few rough edges. Windows has had the most testing; the Mac and Linux builds are newer.</p>
-        <div class="trust">
-          <div><strong>Windows 10 and 11</strong><span>Standard installer. The most tested build.</span></div>
-          <div><strong>Mac</strong><span>Built for Intel and runs on Apple Silicon through Rosetta 2. The build isn't signed yet, so macOS blocks it the first time: open it once, then go to System Settings &rarr; Privacy &amp; Security and click Open Anyway.</span></div>
-          <div><strong>Linux</strong><span>AppImage for x86-64. Mark it executable and run it. Behavior can vary between distributions and desktops.</span></div>
+        <h2>Download MailShell</h2>
+        <p class="intro" style="margin:0 auto 28px">It's an early beta, so expect a few rough edges. Windows has had the most testing. The Mac and Linux builds are newer, so reports from those are especially helpful.</p>
+        <div class="features platforms">
+          <div class="card"><h3>Windows 10 and 11</h3><p>A standard installer, and the most tested build.</p><a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/mailshell-0.2.0-beta.1-Setup.exe">Download for Windows</a></div>
+          <div class="card"><h3>Mac</h3><p>Built for Intel and runs on Apple Silicon through Rosetta 2. It isn't signed yet, so macOS blocks it the first time. Try to open it once, then go to System Settings &rarr; Privacy &amp; Security and click Open Anyway.</p><a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/MailShell-darwin-x64-0.2.0-beta.1.zip">Download for Mac</a></div>
+          <div class="card"><h3>Linux</h3><p>An AppImage for x86-64. Mark it executable and run it. Some details can vary between distributions and desktops.</p><a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/mailshell-0.2.0-beta.1-x86_64.AppImage">Download for Linux</a></div>
         </div>
-        <p style="margin-top:22px">Found a bug? <a href="https://github.com/atomtroxell/mailshell/issues">Check open issues or report a new one</a>. Reports from Mac and Linux users are especially helpful right now.</p>
-      </div>
-    </section>
-
-    <section id="coming">
-      <div class="wrap" style="padding:0">
-        <h2>What's coming next</h2>
-        <p class="intro">On the roadmap, in no particular order.</p>
-        <div class="features">
-          <div class="card up-next"><span class="dot"></span><span class="tag">Up next</span><h3>Multiple accounts in tabs</h3><p>Keep several accounts open at once, each in its own tab with its own sign-in.</p></div>
-          <div class="card"><span class="dot"></span><h3>Outlook.com and Hotmail</h3><p>Personal Outlook.com and Hotmail accounts. Planned, and not supported yet.</p></div>
-          <div class="card"><span class="dot"></span><h3>Infomaniak and more</h3><p>Infomaniak Mail and other mail services, alongside Gmail and Exchange. Planned.</p></div>
-          <div class="card"><span class="dot"></span><h3>Signed Mac builds</h3><p>Signed with an Apple Developer certificate, so MailShell opens on Mac with no security workaround.</p></div>
-          <div class="card"><span class="dot"></span><h3>Stable Mac and Linux releases</h3><p>More testing and fixes, so the Mac and Linux builds can come out of beta.</p></div>
-        </div>
+        <p>Version 0.2.0-beta.1 &middot; <a href="https://github.com/atomtroxell/mailshell/releases">Release notes and older versions</a></p>
+        <div class="tip"><p>MailShell is free. If it earns a spot on your taskbar, you can <a href="https://buymeacoffee.com/atomtroxell">buy me a coffee &#9749;</a> to say thanks.</p></div>
       </div>
     </section>
 
@@ -277,34 +273,34 @@
           <h3>Is MailShell really free?</h3>
           <p>Yes. It's free and open source under the MIT License, with no ads, no paid tier and no trial. If you'd like to support it, you can <a href="https://buymeacoffee.com/atomtroxell">buy me a coffee</a>, but it's entirely optional.</p>
 
-          <h3>Does MailShell read or store my email?</h3>
-          <p>No. MailShell shows your mail service's own web page in its own window. Your messages stay with Google or Microsoft, and MailShell sends nothing to its author.</p>
-
           <h3>Which accounts work?</h3>
-          <p>Two kinds: Gmail accounts, and Exchange work or school accounts (Microsoft 365). Personal Microsoft accounts (Outlook.com, Hotmail) aren't supported yet, but they're on the roadmap, along with Infomaniak and other mail services. Support for more than one account at a time is coming too.</p>
+          <p>Gmail, including Google Workspace accounts, and Exchange work or school accounts on Microsoft 365. Personal Outlook.com and Hotmail accounts aren't supported yet.</p>
 
-          <h3>How is this different from a browser tab?</h3>
-          <p>MailShell gets its own taskbar or Dock icon with an unread count, sends sender notifications, keeps running in the tray when you close it, and tidies up the interface. You can't lose it among 40 tabs.</p>
-
-          <h3>Why does my Mac say it can't open MailShell?</h3>
-          <p>The Mac build isn't signed with an Apple certificate yet. Open it once, then go to System Settings &rarr; Privacy &amp; Security and click Open Anyway.</p>
-
-          <h3>How do I switch between Gmail and Exchange?</h3>
-          <p>Open Settings, choose Mail service, pick the other one, and restart MailShell.</p>
+          <h3>Can I use more than one account?</h3>
+          <p>One at a time for now. You can switch between Gmail and Exchange in Settings under Mail service, and MailShell restarts with the new one. Multiple accounts in tabs is next on the list.</p>
         </div>
       </div>
     </section>
 
-    <section id="download" class="download">
+    <section id="coming">
       <div class="wrap" style="padding:0">
-        <h2>Download MailShell</h2>
-        <p class="intro" style="margin:0 auto 24px">Pick your platform, run the download, and sign in to Gmail or Exchange. That's it.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
-          <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/mailshell-0.2.0-beta.1-Setup.exe">Windows (installer)</a>
-          <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/MailShell-darwin-x64-0.2.0-beta.1.zip">Mac (Intel / Rosetta)</a>
-          <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/releases/download/v0.2.0-beta.1/mailshell-0.2.0-beta.1-x86_64.AppImage">Linux (AppImage)</a>
+        <h2>What's next</h2>
+        <p class="intro">Multiple accounts come first. The rest is planned, in no set order.</p>
+        <div class="features">
+          <div class="card up-next"><span class="dot"></span><span class="tag">Up next</span><h3>Multiple accounts in tabs</h3><p>Keep several accounts open at once, each in its own tab with its own sign-in.</p></div>
+          <div class="card"><span class="dot"></span><h3>Outlook.com and Hotmail</h3><p>Personal Microsoft accounts, alongside the work and school ones that already work.</p></div>
+          <div class="card"><span class="dot"></span><h3>Infomaniak and more</h3><p>Infomaniak Mail and other services beyond Gmail and Exchange.</p></div>
+          <div class="card"><span class="dot"></span><h3>Signed Mac builds</h3><p>A build signed by Apple, so MailShell opens on a Mac without the security workaround.</p></div>
         </div>
-        <p>Version 0.2.0-beta.1 &middot; <a href="https://github.com/atomtroxell/mailshell/releases">Release notes and older versions</a></p>
+      </div>
+    </section>
+
+    <section id="testers" class="download">
+      <div class="wrap" style="padding:0">
+        <h2>Help test it</h2>
+        <p class="intro" style="margin:0 auto 24px">If you use Gmail or Exchange and don't mind trying a beta and telling me what breaks, I'd like to hear from you. The Mac and Linux builds need it most.</p>
+        <a class="btn btn-primary" href="https://github.com/atomtroxell/mailshell/issues/new">Report a problem on GitHub</a>
+        <p>You'll need a free GitHub account. Tell me your platform, your account type and what you were doing when it went wrong. You can also <a href="https://github.com/atomtroxell/mailshell/issues">see what's already reported</a>.</p>
       </div>
     </section>
     </main>
@@ -312,10 +308,10 @@
     <footer>
       <div class="row">
         <div>
-          MailShell is free, open source and MIT licensed.
+          MailShell is free, open source and MIT licensed. &copy; 2026 AJ Troxell.
           <br>MailShell is not affiliated with Google LLC or Microsoft Corporation. Gmail and Google are trademarks of Google LLC; Exchange, Microsoft 365 and Outlook are trademarks of Microsoft Corporation.
         </div>
-        <nav>
+        <nav aria-label="Footer">
           <a href="https://github.com/atomtroxell/mailshell">GitHub</a>
           <a href="https://github.com/atomtroxell/mailshell/issues">Report a bug</a>
           <a href="https://buymeacoffee.com/atomtroxell">Buy me a coffee</a>
