@@ -1,20 +1,23 @@
 {
   "name": "mailshell",
   "productName": "MailShell",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "MailShell - a free desktop app for Gmail",
   "main": ".vite/build/index.js",
   "private": true,
   "author": "AJ Troxell",
   "license": "MIT",
   "scripts": {
+    "styles:sync": "node scripts/sync-gmail-styles.mjs",
+    "styles:test": "node scripts/test-gmail-styles.mjs",
+    "styles:probe": "node scripts/gmail-selector-probe.mjs",
     "start": "node scripts/stamp-legal.mjs && electron-forge start",
     "package": "node scripts/stamp-legal.mjs && electron-forge package",
     "make": "node scripts/stamp-legal.mjs && electron-forge make",
     "publish": "electron-forge publish",
     "build": "node scripts/stamp-legal.mjs && electron-forge package",
     "lint": "eslint --ext .ts,.tsx src/",
-    "installer": "npm run package && electron-builder --prepackaged out/MailShell-win32-x64 --config electron-builder.yml --win nsis"
+    "installer": "npm run package && node scripts/write-app-update-config.mjs && electron-builder --prepackaged out/MailShell-win32-x64 --config electron-builder.yml --win nsis"
   },
   "keywords": [],
   "devDependencies": {
@@ -49,7 +52,11 @@
     "electron-conf": "^1.3.0",
     "electron-log": "^5.4.3",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.8.11",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
+  },
+  "overrides": {
+    "js-yaml": "^4.3.2"
   }
 }

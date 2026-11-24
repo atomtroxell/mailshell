@@ -100,7 +100,5 @@ export function createOutlookWebProvider(config: OutlookWebConfig): MailProvider
       if (config.css) await contents.insertCSS(config.css).catch(() => undefined)
       if (config.pageScript) await contents.executeJavaScript(config.pageScript).catch(() => undefined)
     },
-    // Outlook follows the system theme, so MailShell's theme does not change it
-    applyTheme: async () => undefined,
   }
 }

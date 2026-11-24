@@ -1,4 +1,4 @@
-import { app, ipcMain, BrowserWindow, session, nativeTheme, type IpcMainInvokeEvent } from 'electron';
+import { app, ipcMain, BrowserWindow, session, type IpcMainInvokeEvent } from 'electron';
 import { getRefreshToken, clearRefreshToken } from './auth/token-store';
 
 /**
@@ -6,13 +6,15 @@ import { getRefreshToken, clearRefreshToken } from './auth/token-store';
  * Add a key here only together with the Settings control that sets it.
  */
 const PREFERENCE_CHECKS = {
-  theme: (value: unknown): boolean => isThemePreference(value),
   gmailCSSEnabled: (value: unknown): boolean => typeof value === 'boolean',
   mailProvider: (value: unknown): boolean => value === 'gmail' || value === 'exchange',
+  autoUpdateStyles: (value: unknown): boolean => typeof value === 'boolean',
+  autoUpdateApp: (value: unknown): boolean => typeof value === 'boolean',
 } as const;
 import { loadPreferences, savePreferences, type Preferences } from './preferences';
 import { provider } from './providers';
-import { isThemePreference } from './theme-css';
+import { applyUpdateSettings, checkNow } from './updates';
+import { newerRelease, openNewerRelease } from './release-notice';
 import { decideSender, type SenderPolicy } from './ipc-sender-policy';
 import { getSettingsWebContents } from './settings-window';
 
@@ -222,21 +224,54 @@ export const setupIPC = (window: BrowserWindow): void => {
       Object.assign(prefs, { [key]: value });
       await savePreferences(prefs);
 
-      // Apply the presets switch to the open mail page immediately. The
-      // provider also sets the dark theme, which follows the presets switch.
+      // Apply the presets switch to the open mail page immediately.
       if (key === 'gmailCSSEnabled' && mainWindow) {
         await provider.applyLook(mainWindow.webContents, prefs);
       }
 
-      // Theme: drive nativeTheme. The window.ts 'updated' listener owns the
-      // window background colour. Gmail itself is not styled (use Gmail's theme).
-      if (key === 'theme' && isThemePreference(value)) {
-        nativeTheme.themeSource = value;
+      // Start or stop the scheduled update checks to match the new setting
+      if (key === 'autoUpdateStyles' || key === 'autoUpdateApp') {
+        applyUpdateSettings(prefs);
       }
     } catch (error) {
       console.error('Failed to set preference:', (error as Error).message);
       throw new Error('Failed to set preference');
     }
+  });
+
+  /**
+   * Check now for new Gmail styles and a new MailShell version (Settings button)
+   */
+  ipcMain.handle('updates:checkNow', async (event) => {
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+    try {
+      return await checkNow();
+    } catch (error) {
+      console.error('Update check failed:', (error as Error).message);
+      throw new Error('Update check failed');
+    }
+  });
+
+  /**
+   * The newer release from the last check, for the Settings window
+   */
+  ipcMain.handle('updates:latest', async (event) => {
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+    return newerRelease();
+  });
+
+  /**
+   * Open the newer release's download page (Settings button)
+   */
+  ipcMain.handle('updates:openDownload', async (event) => {
+    if (!validateSender(event)) {
+      throw new Error('Unauthorized IPC call');
+    }
+    await openNewerRelease();
   });
 
   /**

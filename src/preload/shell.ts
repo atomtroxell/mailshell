@@ -10,7 +10,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ElectronAPI } from '../shared/ipc-types';
 
-type SettingsBridge = Pick<ElectronAPI, 'app' | 'preferences'>;
+type SettingsBridge = Pick<ElectronAPI, 'app' | 'preferences' | 'updates'>;
 
 const settingsAPI: SettingsBridge = {
   app: {
@@ -20,6 +20,11 @@ const settingsAPI: SettingsBridge = {
     get: () => ipcRenderer.invoke('preferences:get'),
     set: (key: string, value: any) => ipcRenderer.invoke('preferences:set', key, value),
     clearCache: () => ipcRenderer.invoke('preferences:clearCache'),
+  },
+  updates: {
+    checkNow: () => ipcRenderer.invoke('updates:checkNow'),
+    latest: () => ipcRenderer.invoke('updates:latest'),
+    openDownload: () => ipcRenderer.invoke('updates:openDownload'),
   },
 };
 

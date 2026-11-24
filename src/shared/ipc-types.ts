@@ -4,13 +4,33 @@
  */
 
 export interface Preferences {
-  theme: 'light' | 'dark' | 'system';
   gmailCSSEnabled: boolean;
   mailProvider: 'gmail' | 'exchange' | null;
+  autoUpdateStyles: boolean;
+  autoUpdateApp: boolean;
+  lastSeenVersion: string | null;
+  lastNoticeVersion: string | null;
   version: string;
 }
 
+/** A newer MailShell release found on GitHub. */
+export interface NewerRelease {
+  version: string;
+  url: string;
+}
+
 export interface ElectronAPI {
+  updates: {
+    /**
+     * Check now for new Gmail styles and a new MailShell version.
+     * Resolves to a short line of text for the Settings window.
+     */
+    checkNow: () => Promise<string>;
+    /** The newer release from the last check, or null. */
+    latest: () => Promise<NewerRelease | null>;
+    /** Open the newer release's download page in the browser. */
+    openDownload: () => Promise<void>;
+  };
   auth: {
     /**
      * Get the current access token for API requests

@@ -9,7 +9,7 @@ import { chooseProvider, chooserUrl, parseChoice } from './first-run'
 import { openAttachment } from './attachment-open'
 import { showErrorPage, classifyLoadError, sanitizeUrlForLog, NET_ERROR } from './error-page'
 import { loadPreferences } from './preferences'
-import { darkAwareBackground, isThemePreference } from './theme-css'
+import { darkAwareBackground } from './theme-css'
 import { renderBadgePng } from './unread-count'
 import { notifyNewMail } from './notify'
 import { createTray, isQuitting, setTrayUnread } from './tray'
@@ -120,16 +120,6 @@ function openExternalIfWeb(url: string): void {
  * log out.
  */
 export async function createWindow(options: { chooser?: boolean } = {}): Promise<BrowserWindow> {
-  // Apply the saved theme before any window exists so a Dark preference
-  // does not flash white. Invalid stored values fall back to 'system'.
-  const startupPrefs = await loadPreferences()
-  if (isThemePreference(startupPrefs.theme)) {
-    nativeTheme.themeSource = startupPrefs.theme
-  } else {
-    nativeTheme.themeSource = 'system'
-    console.warn('Invalid theme preference; using system')
-  }
-  console.info('Theme source:', nativeTheme.themeSource)
   lastDark = nativeTheme.shouldUseDarkColors
 
   mainWindow = new BrowserWindow({
@@ -335,7 +325,6 @@ export async function createWindow(options: { chooser?: boolean } = {}): Promise
       if (!mainWindow || mainWindow.isDestroyed()) return
       const win = mainWindow
       win.setBackgroundColor(darkAwareBackground(dark))
-      void loadPreferences().then((prefs) => provider.applyTheme(win.webContents, prefs))
     })
   }
 

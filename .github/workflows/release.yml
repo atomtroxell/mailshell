@@ -25,7 +25,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: out/installer/*.exe
+          # latest.yml and the blockmap let installed copies find and download updates
+          path: |
+            out/installer/*.exe
+            out/installer/*.blockmap
+            out/installer/latest.yml
 
   macos:
     runs-on: macos-latest

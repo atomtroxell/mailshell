@@ -6,10 +6,11 @@
 !define MUI_FINISHPAGE_LINK "Buy me a coffee (optional, opens in your browser)"
 !define MUI_FINISHPAGE_LINK_LOCATION "https://buymeacoffee.com/atomtroxell"
 
-; Welcome page: a short what's-new note in place of the default text.
+; Welcome page: a short intro. What's new lives in the in-app "What's new" popup
+; (src/main/whats-new.ts), so it is not repeated here.
 ; $\r$\n is a line break in NSIS text.
 !macro customWelcomePage
   !define MUI_WELCOMEPAGE_TITLE "Welcome to MailShell"
-  !define MUI_WELCOMEPAGE_TEXT "MailShell is a free desktop app for Gmail.$\r$\n$\r$\nWhat's new in this beta:$\r$\n   - Attachments listed at the top of each conversation$\r$\n   - Unread count on the taskbar (Dock on Mac)$\r$\n   - New-mail notifications$\r$\n   - System tray icon: closing the window keeps MailShell running$\r$\n   - Dark theme that follows your system setting$\r$\n   - Cleaner email list$\r$\n   - Ctrl+Shift+B shows or hides the sidebar$\r$\n$\r$\nClick Next to read the license."
+  !define MUI_WELCOMEPAGE_TEXT "MailShell is a free desktop app for Gmail.$\r$\n$\r$\nClick Next to read the license."
   !insertmacro MUI_PAGE_WELCOME
 !macroend

@@ -2,6 +2,7 @@ import { BrowserWindow, app, type WebContents } from 'electron';
 import path from 'path';
 import { THEME_VARS } from './theme-css';
 import { provider } from './providers';
+import { appUpdatesSupported } from './app-updates';
 
 
 let settingsWindow: BrowserWindow | null = null;
@@ -13,6 +14,7 @@ function getPreloadPath(): string {
 // Embedded settings HTML
 function settingsHtml(): string {
   const isGmail = provider.id === 'gmail'
+  const appUpdates = appUpdatesSupported()
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -161,10 +163,7 @@ ${THEME_VARS}
     isGmail
       ? `<section>
     <h2>Appearance</h2>
-    <label><input type="radio" name="theme" value="system" id="themeSystem" /> Use system setting</label>
-    <label><input type="radio" name="theme" value="light" id="themeLight" /> Light</label>
-    <label><input type="radio" name="theme" value="dark" id="themeDark" /> Dark</label>
-    <p class="help-text">Applies to MailShell, Gmail and Windows dialogs. System follows your Windows setting.</p>
+    <p class="help-text">Gmail's own theme is chosen in Gmail. MailShell's other windows follow your Windows setting.</p>
     ${provider.themesUrl ? `<a id="gmail-themes" class="btn-link" href="${provider.themesUrl}">Open Gmail themes</a>` : ''}
   </section>`
       : ''
@@ -184,6 +183,26 @@ ${THEME_VARS}
       : ''
   }
 
+  <!-- Updates section -->
+  <section>
+    <h2>Updates</h2>
+    ${
+      isGmail
+        ? '<label><input type="checkbox" id="autoUpdateStyles" /> <span>Update Gmail styles automatically</span></label><p class="help-text">Checks every 6 hours and applies new styles as soon as they change. No restart needed.</p>'
+        : ''
+    }
+    <label><input type="checkbox" id="autoUpdateApp"${appUpdates ? '' : ' disabled'} /> <span>Update MailShell automatically</span></label>
+    <p class="help-text">${appUpdates ? 'Checks every 6 hours. When an update is ready, MailShell asks you to restart.' : 'Available in the Windows installer build only. Other builds still tell you when a new version is out.'}</p>
+    <div id="releaseNotice" role="status" hidden style="padding: 12px; border-radius: 4px; margin-bottom: 16px; background-color: var(--ok-bg); color: var(--ok-fg);">
+      <p id="releaseText"></p>
+      <button id="downloadBtn" type="button">Download</button>
+    </div>
+    <div>
+      <button id="checkUpdatesBtn" type="button">Check for updates now</button>
+      <p class="button-desc" id="updateStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
   <!-- Data Management section -->
   <section>
     <h2>Data Management</h2>
@@ -202,7 +221,7 @@ ${THEME_VARS}
 
   <script>
     // IPC communication (from preload)
-    const { preferences, app } = window.electron || {};
+    const { preferences, app, updates } = window.electron || {};
 
     if (!preferences || !app) {
       showError('Settings API not available');
@@ -214,11 +233,12 @@ ${THEME_VARS}
         const prefs = await preferences.get();
         const gmailToggle = document.getElementById('gmailCSSEnabled');
         if (gmailToggle) gmailToggle.checked = prefs.gmailCSSEnabled;
+        const styleUpdates = document.getElementById('autoUpdateStyles');
+        if (styleUpdates) styleUpdates.checked = prefs.autoUpdateStyles !== false;
+        const appUpdatesBox = document.getElementById('autoUpdateApp');
+        if (appUpdatesBox) appUpdatesBox.checked = !appUpdatesBox.disabled && prefs.autoUpdateApp !== false;
         const service = document.querySelector('input[name="mailProvider"][value="' + prefs.mailProvider + '"]');
         if (service) service.checked = true;
-        const theme = ['light', 'dark', 'system'].includes(prefs.theme) ? prefs.theme : 'system';
-        const themeRadio = document.querySelector('input[name="theme"][value="' + theme + '"]');
-        if (themeRadio) themeRadio.checked = true;
       } catch (error) {
         showError(\`Failed to load preferences: \${error.message}\`);
         console.error('Failed to load preferences:', error);
@@ -246,19 +266,6 @@ ${THEME_VARS}
       }
     });
 
-    // Handle theme radios (fixed messages only; the value is never put in HTML)
-    const THEME_MESSAGES = { system: 'Theme: system setting', light: 'Theme: light', dark: 'Theme: dark' };
-    document.querySelectorAll('input[name="theme"]').forEach((radio) => {
-      radio.addEventListener('change', async (e) => {
-        try {
-          await preferences.set('theme', e.target.value);
-          showSuccess(THEME_MESSAGES[e.target.value] || 'Theme updated');
-        } catch (error) {
-          showError('Failed to update theme');
-          loadPreferences();
-        }
-      });
-    });
 
     // Handle mail service radios (takes effect after a restart)
     const SERVICE_MESSAGES = { gmail: 'Restart MailShell to use Gmail', exchange: 'Restart MailShell to use Exchange / Microsoft 365' };
@@ -311,9 +318,66 @@ ${THEME_VARS}
       }, 3000);
     }
 
+    // Update settings
+    const styleUpdatesToggle = document.getElementById('autoUpdateStyles');
+    if (styleUpdatesToggle) styleUpdatesToggle.addEventListener('change', async (e) => {
+      try {
+        await preferences.set('autoUpdateStyles', e.target.checked);
+        showSuccess(e.target.checked ? 'Automatic Gmail style updates on' : 'Automatic Gmail style updates off');
+      } catch (error) {
+        showError('Failed to update the Gmail style setting');
+        loadPreferences();
+      }
+    });
+    const appUpdatesToggle = document.getElementById('autoUpdateApp');
+    if (appUpdatesToggle) appUpdatesToggle.addEventListener('change', async (e) => {
+      try {
+        await preferences.set('autoUpdateApp', e.target.checked);
+        showSuccess(e.target.checked ? 'Automatic MailShell updates on' : 'Automatic MailShell updates off');
+      } catch (error) {
+        showError('Failed to update the MailShell update setting');
+        loadPreferences();
+      }
+    });
+    const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+    const updateStatus = document.getElementById('updateStatus');
+    checkUpdatesBtn.addEventListener('click', async () => {
+      checkUpdatesBtn.disabled = true;
+      updateStatus.textContent = 'Checking...';
+      try {
+        updateStatus.textContent = await updates.checkNow();
+      } catch (error) {
+        updateStatus.textContent = 'The update check failed.';
+      } finally {
+        checkUpdatesBtn.disabled = false;
+        loadLatestRelease();
+      }
+    });
+
+    // Show a newer release found by the last check, with a Download button
+    async function loadLatestRelease() {
+      const notice = document.getElementById('releaseNotice');
+      const text = document.getElementById('releaseText');
+      try {
+        const latest = await updates.latest();
+        notice.hidden = !latest;
+        if (latest) text.textContent = 'MailShell ' + latest.version + ' is available.';
+      } catch (error) {
+        notice.hidden = true;
+      }
+    }
+    document.getElementById('downloadBtn').addEventListener('click', async () => {
+      try {
+        await updates.openDownload();
+      } catch (error) {
+        showError('Could not open the download page.');
+      }
+    });
+
     // Load on startup
     loadPreferences();
     loadVersion();
+    loadLatestRelease();
   </script>
 </body>
 </html>`

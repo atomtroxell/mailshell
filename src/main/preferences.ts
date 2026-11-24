@@ -3,17 +3,27 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 export interface Preferences {
-  theme: 'light' | 'dark' | 'system';
   gmailCSSEnabled: boolean;
   /** Which mail service to open. null until the user has answered the first-run question. */
   mailProvider: 'gmail' | 'exchange' | null;
+  /** Check for new Gmail styles on a schedule and apply them when they change. */
+  autoUpdateStyles: boolean;
+  /** Check for new MailShell versions on a schedule (Windows installer build only). */
+  autoUpdateApp: boolean;
+  /** The version the "What's new" notice was last recorded for. null until the first run. */
+  lastSeenVersion: string | null;
+  /** The newer release the "update available" popup was last shown for. null if never. */
+  lastNoticeVersion: string | null;
   version: string;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
-  theme: 'system',
   gmailCSSEnabled: true,
   mailProvider: null,
+  autoUpdateStyles: true,
+  autoUpdateApp: true,
+  lastSeenVersion: null,
+  lastNoticeVersion: null,
   version: '0.2.0-beta.1',
 };
 

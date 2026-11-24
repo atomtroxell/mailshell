@@ -50,8 +50,6 @@ export interface MailProvider {
   watchWindow(contents: WebContents): void
   /** Called after each page load and in-page navigation */
   onPageChange(contents: WebContents): void
-  /** Apply the presets and the theme (on page load) */
+  /** Apply the presets (on page load) */
   applyLook(contents: WebContents, prefs: Preferences): Promise<void>
-  /** Apply the theme only (when the theme changes) */
-  applyTheme(contents: WebContents, prefs: Preferences): Promise<void>
 }

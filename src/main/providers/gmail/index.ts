@@ -5,7 +5,7 @@
 
 import type { MailProvider } from '../types'
 import type { ComposeFields } from '../../mailto'
-import { applyGmailCSS, applyGmailDarkTheme, darkGmailWanted } from './css'
+import { applyGmailCSS } from './css'
 import { refreshAttachmentPanel, watchOpenThread } from './attachment-panel'
 
 const MAIL_HOST = 'mail.google.com'
@@ -107,10 +107,5 @@ export const gmail: MailProvider = {
   async applyLook(contents, prefs) {
     // gmailCSSEnabled defaults to true if not set
     await applyGmailCSS(contents, prefs.gmailCSSEnabled !== false)
-    await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
-  },
-
-  async applyTheme(contents, prefs) {
-    await applyGmailDarkTheme(contents, darkGmailWanted(prefs))
   },
 }

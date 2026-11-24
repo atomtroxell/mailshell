@@ -10,6 +10,9 @@ import { loadPreferences } from './preferences'
 import { setupIPC } from './ipc'
 import { setupAppMenu } from './app-menu'
 import { markQuitting } from './tray'
+import { loadCachedGmailStyles } from './gmail-styles'
+import { applyUpdateSettings } from './updates'
+import { showWhatsNewIfUpdated } from './whats-new'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (started) {
@@ -51,10 +54,10 @@ app.on('open-url', (event, url) => {
 app.on('before-quit', () => markQuitting())
 
 // Windows toast notifications take their name and icon from the app's
-// AppUserModelID. Use the ID the Squirrel installer gives the Start Menu
-// shortcut (com.squirrel.mailshell.mailshell), so toasts say "MailShell" with its icon
-// in dev runs too. Without this, a dev run registers as electron.app.Electron.
-// Must run before any notification is shown.
+// AppUserModelID, which Windows matches to a Start Menu shortcut. The installed
+// build (electron-builder NSIS) makes its shortcut with appId com.mailshell.app, so
+// toasts show "MailShell" and its icon there. A dev run has no such shortcut, so its
+// toasts show the Electron icon; that is expected. Must run before any notification is shown.
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.mailshell.app') // matches the installer's shortcut (electron-builder appId)
 }
@@ -76,6 +79,8 @@ app.on('ready', async () => {
     const prefs = await loadPreferences()
     const hasChoice = prefs.mailProvider === 'gmail' || prefs.mailProvider === 'exchange'
     selectProvider(prefs.mailProvider)
+    // Use the last good Gmail styles downloaded earlier, if any, before the first page loads
+    await loadCachedGmailStyles()
     mainWindow = await createWindow({ chooser: !hasChoice })
     // A mailto: link that arrived before the app was ready opens its own compose window
     if (pendingMailto) {
@@ -86,6 +91,16 @@ app.on('ready', async () => {
     if (mainWindow) {
       setupIPC(mainWindow)
       setupAppMenu(mainWindow)
+      applyUpdateSettings(prefs)
+      // Show the "What's new" popup once, after the first page has loaded
+      const win = mainWindow
+      const showNotice = (): void => {
+        showWhatsNewIfUpdated(win, prefs).catch((error: Error) =>
+          console.error("What's new notice failed:", error.message),
+        )
+      }
+      if (win.webContents.isLoading()) win.webContents.once('did-finish-load', showNotice)
+      else showNotice()
     }
   } catch (error) {
     console.error('Failed to initialize app:', (error as Error).message)
