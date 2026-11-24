@@ -53,13 +53,14 @@ app.on('open-url', (event, url) => {
 // Let the window close for real when the app quits (see tray.ts)
 app.on('before-quit', () => markQuitting())
 
-// Windows toast notifications take their name and icon from the app's
-// AppUserModelID, which Windows matches to a Start Menu shortcut. The installed
-// build (electron-builder NSIS) makes its shortcut with appId com.mailshell.app, so
-// toasts show "MailShell" and its icon there. A dev run has no such shortcut, so its
-// toasts show the Electron icon; that is expected. Must run before any notification is shown.
-if (process.platform === 'win32') {
-  app.setAppUserModelId('com.mailshell.app') // matches the installer's shortcut (electron-builder appId)
+// Windows toast notifications and the taskbar button take their name and icon from the
+// app's AppUserModelID, which Windows matches to a shortcut with the same ID. The installer
+// sets that ID on MailShell's Start Menu and desktop shortcuts (build/installer.nsh,
+// customInstall). Only the installed app sets it. Dev runs must not: they show Electron's
+// icon, and that icon stuck to com.mailshell.app on the taskbar, so the installed app lost its icon.
+// Must run before any notification is shown.
+if (process.platform === 'win32' && app.isPackaged) {
+  app.setAppUserModelId('com.mailshell.desktop') // must match build/installer.nsh
 }
 
 // Security: Enforce ASAR integrity and disable renderer node integration

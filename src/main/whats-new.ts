@@ -9,6 +9,10 @@ import { decideWhatsNew, type WhatsNewNotes } from './whats-new-core';
 
 // Add an entry here for each release, with the version exactly as in package.json.
 export const WHATS_NEW: WhatsNewNotes = {
+  '0.2.0-beta.3': [
+    "I fixed the taskbar icon. It had turned into Electron's default icon.",
+    "Help > What's New shows these notes any time. Before, they only came up once after an update.",
+  ],
   '0.2.0-beta.2': [
     "Google changed its page and the Gmail layout had gone wrong. The header and mail rows fit again.",
     "Dark mode is Gmail's own now. Pick it in Gmail's Themes setting. I took out MailShell's own dark theme and its theme setting.",
@@ -37,13 +41,24 @@ export async function showWhatsNewIfUpdated(win: BrowserWindow, prefs: Preferenc
   }
   if (!decision.show) return;
 
+  await showNotesDialog(win, current, decision.show);
+}
+
+/** Help > What's new: always shows the notes for the running version, whenever asked. */
+export async function showWhatsNew(win: BrowserWindow): Promise<void> {
+  const current = app.getVersion();
+  const lines = WHATS_NEW[current];
+  await showNotesDialog(win, current, lines && lines.length > 0 ? lines : ['No notes for this version yet.']);
+}
+
+async function showNotesDialog(win: BrowserWindow, version: string, lines: string[]): Promise<void> {
   const options = {
     type: 'info' as const,
     buttons: ['OK'],
     defaultId: 0,
     title: "What's new",
-    message: `MailShell ${current}`,
-    detail: decision.show.map((line) => `• ${line}`).join('\n'),
+    message: `MailShell ${version}`,
+    detail: lines.map((line) => `• ${line}`).join('\n'),
   };
   if (win.isDestroyed()) {
     await dialog.showMessageBox(options);

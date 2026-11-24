@@ -9,6 +9,7 @@ import { acceleratorFor } from '../shared/shortcuts'
 import { DONATE_URL } from '../shared/links'
 import { openLegalPage } from './legal'
 import { provider } from './providers'
+import { showWhatsNew } from './whats-new'
 
 const showLegalError = (): void => {
   dialog.showErrorBox('MailShell', 'The legal pages could not be found. Reinstall MailShell to restore them.')
@@ -97,6 +98,16 @@ export function setupAppMenu(mainWindow: BrowserWindow): void {
               await createShortcutsWindow(mainWindow)
             } catch (error) {
               console.error('Failed to open keyboard shortcuts:', error)
+            }
+          },
+        },
+        {
+          label: "What's New",
+          click: async () => {
+            try {
+              await showWhatsNew(mainWindow)
+            } catch (error) {
+              console.error("Failed to show What's new:", error)
             }
           },
         },
